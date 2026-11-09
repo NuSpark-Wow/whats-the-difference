@@ -560,7 +560,7 @@ async function fetchPart(part, question, context, opts){
 // Reads the figures as they stream in: one finished figure per line, shown right away.
 async function streamBoard(question, context, opts, a, onFig){
   let r;
-  if (!context && !opts.more) r = await fetch(`/api/ask?part=board&depth=${depth}&v=2&q=${encodeURIComponent(norm(question))}&i=${encodeURIComponent(opts.items || "")}&a=${encodeURIComponent(a)}`);
+  if (!context && !opts.more) r = await fetch(`/api/ask?part=board&depth=${depth}&v=3&q=${encodeURIComponent(norm(question))}&i=${encodeURIComponent(opts.items || "")}&a=${encodeURIComponent(a)}`);
   else r = await fetch("/api/ask", { method:"POST", headers:{ "content-type":"application/json" },
     body: JSON.stringify({ part: "board", question, depth, context: context || "", more: !!opts.more, prev: opts.prev || "", items: opts.items || "", a }) });
   if (!r.ok) throw new Error("H" + r.status);
