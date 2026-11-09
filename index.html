@@ -1,0 +1,1147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What's the Difference?</title>
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b1020; --panel:#111831; --card:#151d3a; --card2:#1c2648; --ink:#ffffff; --soft:#c5cde6; --line:#3a4672;
+  --board:#0a0f1f; --board2:#131b38; --frame:#3a4672; --chalk:#ffffff; --gold:#ffd23f;
+  --accent:#ffd23f; --accent-d:#c9a019; --red:#b5483a; --green:#3f7d4f; --sky:#4cc3ff; --radius:14px;
+  --a:#ff8a65; --b:#4cc3ff; --c:#b8f04a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.wrap{max-width:1200px;margin:0 auto;padding:18px 16px 30px}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding:12px 16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:clamp(22px,2.8vw,30px);letter-spacing:-.2px}
+.brand .dot{width:22px;height:22px;border-radius:50%;background:linear-gradient(90deg,var(--a) 0 50%,var(--b) 50% 100%);flex:none}
+.brand small{display:block;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:500;color:var(--soft);letter-spacing:.3px;margin-top:2px}
+.toggle{display:flex;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.toggle button{border:0;background:transparent;padding:9px 14px;border-radius:9px;font-weight:700;font-size:15px;color:var(--soft);min-height:44px}
+.toggle button.on{background:var(--accent);color:#000}
+.toggle small{display:block;font-size:11px;font-weight:600;opacity:.8}
+
+.ask{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;gap:12px;align-items:center}
+.mic{flex:none;width:64px;height:64px;border-radius:50%;border:0;background:var(--red);color:#fff;font-size:28px;box-shadow:0 4px 0 #8a3328}
+.mic.listening{animation:pulse 1.1s infinite}
+.mic:active{transform:translateY(2px)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(181,72,58,.6)}100%{box-shadow:0 0 0 20px rgba(181,72,58,0)}}
+.field{flex:1;min-width:0}
+.field input{width:100%;border:2px solid var(--line);border-radius:12px;padding:14px 16px;font-size:19px;font-family:inherit;color:var(--ink);outline:none;background:var(--card2)}
+.field input::placeholder{color:#93a0c8}
+.field input:focus{border-color:var(--accent)}
+.pair{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.pair input{flex:1 1 170px;width:auto}
+.pair #a{border-color:var(--a)} .pair #b{border-color:var(--b)} .pair #c{border-color:var(--c)}
+.pair #a:focus,.pair #b:focus,.pair #c:focus{box-shadow:0 0 0 3px rgba(255,255,255,.22)}
+.pair .vs{flex:none;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--gold)}
+.pair .cwrap{display:flex;gap:10px;align-items:center;flex:1 1 170px}
+.pair .addc{flex:none;border:1px dashed var(--line);background:transparent;color:var(--soft);border-radius:10px;padding:0 12px;min-height:44px;font-weight:600;font-size:14px}
+.pair .addc:hover{border-color:var(--accent);color:var(--accent)}
+.hint{font-size:13.5px;color:var(--soft);margin-top:6px;font-weight:600;min-height:18px}
+.go{flex:none;border:0;background:var(--accent);color:#000;font-weight:800;font-size:18px;padding:0 26px;height:56px;border-radius:12px;box-shadow:0 3px 0 var(--accent-d)}
+.go:disabled{opacity:.5}
+.go.ready{animation:glow 1s infinite alternate}
+@keyframes glow{to{background:#fff0a8}}
+
+/* topic picker */
+.topics{margin:14px 0 16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.topics .th{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.topics .th b{font-size:18px}
+.topics .th span{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--soft)}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;min-height:68px;padding:11px 13px;border-radius:10px;background:var(--card);color:var(--ink);border:1px solid var(--line);font-weight:600;font-size:15px;line-height:1.3}
+.tile .n{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--soft);font-weight:500}
+.tile:hover{border-color:var(--accent)}
+.tile.on{background:var(--accent);border-color:var(--accent);color:#000}
+.tile.on .n{color:#000}
+.qs{margin-top:14px;border:1px solid var(--accent);border-radius:12px;background:var(--board);padding:14px}
+.qs .ql{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.08em;color:var(--accent);margin-bottom:10px;text-transform:uppercase}
+.qrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.qbtn{text-align:left;font-size:15px;background:var(--card2);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-height:48px}
+.qbtn:hover{border-color:var(--accent)}
+.topics.small .tiles,.topics.small .th span{display:none}
+.topics.small .qs{margin-top:0}
+.topics .tog{border:1px solid var(--line);background:var(--card2);color:var(--soft);border-radius:8px;padding:6px 10px;font-weight:600;font-size:13px}
+.chip{border:1px solid var(--line);background:var(--card2);border-radius:999px;padding:8px 14px;font-weight:600;font-size:14.5px;color:var(--ink)}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+
+/* the matchup board */
+.board-wrap{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 12px 10px}
+.board{position:relative;background:radial-gradient(ellipse at 30% 20%,var(--board2),var(--board) 70%);border-radius:10px;overflow:hidden;aspect-ratio:8/5;border:1px solid var(--line)}
+.board::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,138,101,.09) 0 50%,rgba(76,195,255,.09) 50% 100%);pointer-events:none}
+.board.three::before{background:linear-gradient(90deg,rgba(255,138,101,.09) 0 33.33%,rgba(76,195,255,.09) 33.33% 66.66%,rgba(184,240,74,.08) 66.66% 100%)}
+.board svg{position:relative;width:100%;height:100%;display:block}
+.board svg text{cursor:pointer}
+.thinking{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:rgba(10,15,31,.95);font-family:'JetBrains Mono',monospace;font-size:clamp(20px,2.8vw,32px);color:var(--accent)}
+.thinking.on{display:flex}
+.dots span{display:inline-block;width:12px;height:12px;margin:0 5px;border-radius:50%;background:var(--accent);animation:bob .9s infinite}
+.dots span:nth-child(2){animation-delay:.15s;background:var(--sky)}.dots span:nth-child(3){animation-delay:.3s;background:var(--gold)}
+@keyframes bob{50%{transform:translateY(-10px)}}
+.views{display:flex;gap:6px;flex-wrap:wrap;padding:10px 2px 0}
+.views button{flex:1;min-width:130px;border:1px solid var(--line);background:var(--card2);color:var(--soft);border-radius:9px;padding:10px 12px;font-weight:700;font-size:14px;min-height:44px}
+.views button.on{background:var(--accent);color:#000;border-color:var(--accent)}
+.views button:disabled{opacity:.35}
+.tray{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 4px 2px;color:#fff}
+.caption{font-size:clamp(15px,1.7vw,18px);flex:1;min-width:0;line-height:1.35}
+.caption b{color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace}
+.ctrls{display:flex;gap:6px}
+.ctrls button{border:1px solid var(--line);background:var(--card2);color:#fff;font-size:17px;font-weight:800;width:44px;height:44px;border-radius:9px}
+.ctrls button:hover{border-color:var(--accent)}
+.ctrls button:disabled{opacity:.35}
+
+/* notes + sidebar */
+.study{display:grid;grid-template-columns:1.9fr 1fr;gap:16px;margin-top:16px;align-items:start}
+.notes{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px}
+.notes h2{margin:0 0 12px;font-size:clamp(23px,2.5vw,30px);line-height:1.2;font-weight:800}
+.read h4{font-family:'JetBrains Mono',monospace;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:18px 0 4px}
+.read p{font-size:clamp(16.5px,1.5vw,18px);line-height:1.7;margin:0 0 6px;color:#f1f5f9}
+.read .w{border-radius:4px;padding:0 1px;transition:background .12s,color .12s}
+.read .w.on{background:var(--accent);color:#000}
+.read p.lede{font-size:clamp(19px,1.9vw,23px);line-height:1.5;font-weight:700;border-left:4px solid var(--gold);padding:2px 0 2px 14px;margin-bottom:10px}
+.read.speaking .w:not(.done):not(.on){color:#8693b8}
+.playrow{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-weight:700;font-size:15px;background:var(--card2);color:var(--ink);min-height:44px}
+.btn:hover{border-color:var(--accent)}
+.side{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.card h3{margin:0 0 8px;font-family:'JetBrains Mono',monospace;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);font-weight:500}
+.card p{margin:0;font-size:16px;line-height:1.6}
+.terms div{margin:0 0 10px;font-size:15.5px;line-height:1.5}
+.terms b{color:var(--accent)}
+.fxcard b{font-family:'JetBrains Mono',monospace;color:var(--gold);font-weight:500;font-size:16px}
+.fxcard div{margin-bottom:12px}
+.fact{border-left:4px solid var(--gold)}
+.myth{border-left:4px solid var(--a)}
+/* side-by-side table */
+.matchup{margin-top:16px;overflow-x:auto}
+.mt{width:100%;border-collapse:separate;border-spacing:0;font-size:clamp(14.5px,1.5vw,17px);line-height:1.45}
+.mt th,.mt td{padding:11px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.mt thead th{font-size:clamp(16px,1.9vw,21px);font-weight:800;border-bottom:2px solid var(--line)}
+.mt th.pt{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);width:21%}
+.mt .ca{color:var(--a)} .mt .cb{color:var(--b)} .mt .cc{color:var(--c)}
+.mt td.va{background:rgba(255,138,101,.08)} .mt td.vb{background:rgba(76,195,255,.08)} .mt td.vc{background:rgba(184,240,74,.07)}
+.mt tbody tr:last-child th,.mt tbody tr:last-child td{border-bottom:0}
+.mt.three{min-width:520px}
+.mt th.pt{overflow-wrap:normal;word-break:normal}
+@media (max-width:560px){ .mt th,.mt td{padding:9px 8px} .mt th.pt{width:27%;font-size:11px;letter-spacing:0} }
+
+.deeper{margin-top:16px}
+.big-btns{display:flex;gap:12px;flex-wrap:wrap;margin:6px 0 14px}
+.bigbtn{border:0;border-radius:12px;padding:15px 22px;font-weight:800;font-size:17px;color:#000;flex:1;min-width:200px;min-height:52px}
+.bigbtn.ask-about{background:#f87171}
+.bigbtn.more{background:#a3e635}
+.bigbtn.simpler{background:#e2e8f0}
+.bigbtn:active{transform:translateY(2px)}
+.bigbtn.on{outline:3px solid #fff;outline-offset:2px}
+.deeper .sub{font-size:14px;font-weight:700;color:var(--soft);margin-bottom:8px}
+.deeper .row{display:flex;flex-wrap:wrap;gap:10px}
+.follow{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 10px}
+.follow .fl{font-weight:700;font-size:16px;margin-bottom:10px}
+.follow .frow{display:flex;gap:10px;align-items:center}
+.follow .fmic{flex:none;width:50px;height:50px;border-radius:50%;border:0;background:var(--red);color:#fff;font-size:22px;box-shadow:0 3px 0 #8a3328}
+.follow .fmic.listening{background:var(--green);box-shadow:0 3px 0 #2c5a38}
+.follow input{flex:1;min-width:0;height:50px;border:2px solid var(--line);border-radius:12px;padding:0 14px;font-size:16px;font-family:inherit;color:var(--ink);background:var(--card2)}
+.follow input:focus{outline:none;border-color:var(--accent)}
+.follow .fgo{flex:none;border:0;background:var(--accent);color:#000;font-weight:800;font-size:16px;padding:0 20px;height:50px;border-radius:12px}
+.follow .fgo:disabled{opacity:.75}
+.fstatus{font-weight:700;font-size:15px;color:var(--accent);min-height:22px;margin:0 0 10px}
+.fstatus:empty{display:none}
+
+.notice{margin-top:18px;font-size:13px;color:var(--soft);line-height:1.5;text-align:center;font-weight:500}
+.hide{display:none !important}
+.top-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.thumbs{display:flex;align-items:center;gap:6px;margin-left:auto;font-weight:700;font-size:13.5px;color:var(--soft)}
+.thumbs button{border:1px solid var(--line);background:var(--card2);border-radius:10px;padding:7px 10px;font-size:17px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--accent);color:#000;padding:12px 18px;border-radius:10px;font-weight:700;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
+.toast.on{opacity:1}
+.print-figs{display:none}
+.legend{margin:8px 4px 2px;padding:10px 12px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:6px 18px;color:#f1f5f9;font-size:14.5px;line-height:1.4}
+.legend .lt{width:100%;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+.legend b{font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--gold);font-weight:500;margin-right:4px}
+.legend .fx{width:100%;display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.legend .fx div{line-height:1.45}
+.legend .fx b{display:inline-block;margin-right:8px}
+.print-figs .plegend{font-size:12px;padding:0 10px 8px;color:#1d2329}
+
+@media (max-width:900px){ .study{grid-template-columns:1fr} .tiles{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:560px){
+  .ask{flex-wrap:wrap}
+  .mic{width:56px;height:56px;font-size:24px}
+  .field{flex-basis:100%;order:3}
+  .go{width:100%;height:52px;order:4}
+  .qrow{grid-template-columns:1fr}
+  .follow .frow{flex-wrap:wrap}.follow input{flex-basis:calc(100% - 60px)}.follow .fgo{flex:1 1 100%}
+}
+
+/* Save as PDF / print */
+@media print{
+  @page{margin:14mm}
+  html,body{background:#fff;color:#111}
+  .ask,.topics,.top-right,.playrow,.deeper,.notice,.thinking,.ctrls,.views,.toast{display:none !important}
+  .wrap{max-width:none;padding:0}
+  .top{border:0;background:none}
+  .board-wrap{display:none}
+  .print-figs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .print-figs figure{margin:0 0 14px;break-inside:avoid;border:2px solid #3a4672;border-radius:8px;overflow:hidden}
+  .print-figs svg{display:block;width:100%;height:auto;background:#0a0f1f;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-figs figcaption{font-size:13px;padding:6px 10px;color:#1d2329}
+  .study{grid-template-columns:1fr}
+  .notes,.card{border:1px solid #ddd;break-inside:avoid;background:#fff}
+  .notes h2,.read p,.card p,.terms div,.mt th,.mt td{color:#111 !important}
+  .mt td{background:none !important}
+  .mt th,.mt td{border-bottom:1px solid #ccc}
+  .card h3,.read h4{color:#444}
+  .read .w{color:#111 !important;background:none !important}
+}
+</style>
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="brand"><span class="dot"></span><div>What's the Difference?<small>Any two things, lined up side by side.</small></div></div>
+    <div class="top-right">
+      <div class="toggle" role="group" aria-label="Explanation level">
+        <button id="dQuick">💡 Everyday<small>easy to follow</small></button>
+        <button id="dFull">🔎 More Detail<small>the finer points</small></button>
+      </div>
+      <div class="toggle" role="group" aria-label="Choose a voice">
+        <button id="vMan" class="on">🔊 Man</button>
+        <button id="vWoman">🔊 Woman</button>
+      </div>
+      <div class="toggle" role="group" aria-label="Voice speed">
+        <button id="sNormal" class="on">▶ Normal</button>
+        <button id="sSlow">🐢 Slow</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ask">
+    <button class="mic" id="mic" aria-label="Ask with your voice">🎤</button>
+    <div class="field">
+      <input type="hidden" id="q">
+      <div class="pair">
+        <input id="a" maxlength="80" placeholder="First thing…" autocomplete="off" aria-label="First thing to compare">
+        <span class="vs">VS</span>
+        <input id="b" maxlength="80" placeholder="Second thing…" autocomplete="off" aria-label="Second thing to compare">
+        <span class="cwrap hide" id="cWrap"><span class="vs">VS</span><input id="c" maxlength="80" placeholder="Third thing…" autocomplete="off" aria-label="Third thing to compare"></span>
+        <button class="addc" id="addC" type="button">＋ Add a third</button>
+      </div>
+      <div class="hint" id="hint">Type two things, tap the mic and say them, or pick a starter pair below.</div>
+    </div>
+    <button class="go" id="go">Compare</button>
+  </div>
+  <div class="topics" id="starters"></div>
+
+  <div class="board-wrap">
+    <div class="board">
+      <svg id="svg" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg" aria-label="Comparison board"></svg>
+      <div class="thinking" id="thinking"><div id="thinkText">Thinking...</div><div class="dots"><span></span><span></span><span></span></div></div>
+    </div>
+    <div class="views" id="views" role="group" aria-label="Views">
+      <button data-v="0" disabled>Side by side</button>
+      <button data-v="1" disabled>What they share</button>
+      <button data-v="2" disabled>Key differences</button>
+      <button data-v="3" disabled>Which one when</button>
+    </div>
+    <div class="tray">
+      <div class="caption" id="caption">Enter two things to begin.</div>
+      <div class="ctrls">
+        <button id="prev" aria-label="Previous figure" disabled>◀</button>
+        <button id="next" aria-label="Next figure" disabled>▶</button>
+        <button id="replay" aria-label="Redraw figure" disabled>⟲</button>
+      </div>
+    </div>
+    <div class="legend hide" id="legend"></div>
+  </div>
+  <div class="print-figs" id="printFigs"></div>
+
+  <div class="card matchup hide" id="matchCard"><h3>Side by Side</h3><div id="match"></div></div>
+
+  <div class="study">
+    <div class="notes">
+      <h2 id="title">Ever mix two things up?</h2>
+      <div class="read" id="read"><p>Put any two things in the boxes, on any topic. You'll get the short answer, a side-by-side table, what they share, the key differences, when to use each one, and a trick to remember it, all read aloud while the board draws it out.</p></div>
+      <div class="playrow hide" id="playrow">
+        <button class="btn" id="again">🔊 Hear it</button>
+        <button class="btn hide" id="stop">⏹ Stop</button>
+        <button class="btn" id="share">🔗 Share</button>
+        <button class="btn" id="pdf">📄 Save as PDF</button>
+        <div class="thumbs" id="thumbs"><span id="helpful">Helpful?</span><button id="up" aria-label="Yes">👍</button><button id="down" aria-label="No">👎</button></div>
+      </div>
+    </div>
+    <div class="side hide" id="side">
+      <div class="card terms hide" id="termsCard"><h3>Key Words</h3><div id="terms"></div></div>
+      <div class="card terms fxcard hide" id="fxCard"><h3>Formulas Explained</h3><div id="fxList"></div></div>
+      <div class="card fact hide" id="factCard"><h3>How to Remember It</h3><p id="fact"></p></div>
+      <div class="card myth hide" id="mythCard"><h3>Common Mix-Up</h3><p id="myth"></p></div>
+    </div>
+  </div>
+
+  <div class="card deeper hide" id="deepCard">
+    <h3>Keep comparing</h3>
+    <div class="big-btns">
+      <button class="bigbtn ask-about" id="askAbout">💬 Ask about this</button>
+      <button class="bigbtn more" id="goDeeper">➕ Go deeper</button>
+      <button class="bigbtn simpler" id="simpler">💡 Simpler please</button>
+    </div>
+    <div class="follow hide" id="followBox">
+      <div class="fl" id="fLabel"></div>
+      <div class="frow"><button class="fmic" id="fMic" aria-label="Speak">🎤</button><input id="fq" autocomplete="off"><button class="fgo" id="fGo"></button></div>
+    </div>
+    <div class="fstatus" id="fStatus" aria-live="polite"></div>
+    <div class="sub">Compare next:</div>
+    <div class="row" id="deeper"></div>
+  </div>
+
+  <p class="notice">Your voice is never recorded; your words are turned into text right away. Money, legal and health comparisons are general information, not personal advice. AI can make mistakes, so double-check anything important.</p>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const TOPICS = [
+["Money & Finance", [["stock", "bond"], ["credit card", "debit card"], ["Roth IRA", "traditional IRA"], ["APR", "APY"]]],
+["Health & Body", [["virus", "bacteria"], ["cold", "flu"], ["heart attack", "cardiac arrest"], ["Medicare", "Medicaid"]]],
+["Food & Cooking", [["baking soda", "baking powder"], ["jam", "jelly"], ["espresso", "drip coffee"], ["sweet potato", "yam"]]],
+["Law & Government", [["jail", "prison"], ["misdemeanor", "felony"], ["lawyer", "attorney"], ["the Senate", "the House of Representatives"]]],
+["Technology", [["Wi-Fi", "the internet"], ["RAM", "storage"], ["modem", "router"], ["4G", "5G"]]],
+["Science & Nature", [["weather", "climate"], ["mass", "weight"], ["speed", "velocity"], ["asteroid", "comet", "meteor"]]],
+["Animals", [["alligator", "crocodile"], ["frog", "toad"], ["turtle", "tortoise"], ["dolphin", "porpoise"]]],
+["Cars & Transportation", [["hybrid car", "electric car"], ["horsepower", "torque"], ["all-wheel drive", "four-wheel drive"], ["gas engine", "diesel engine"]]],
+["Home & Everyday", [["LED bulb", "incandescent bulb"], ["heat pump", "furnace"], ["hardwood floor", "laminate floor"], ["condo", "townhouse"]]],
+["Language & Words", [["affect", "effect"], ["simile", "metaphor"], ["who", "whom"], ["empathy", "sympathy"]]],
+["Business & Work", [["revenue", "profit"], ["marketing", "advertising"], ["LLC", "corporation"], ["W-2 employee", "1099 contractor"]]],
+["Places & Geography", [["ocean", "sea"], ["England", "Great Britain", "United Kingdom"], ["Holland", "the Netherlands"], ["the Arctic", "Antarctica"]]],
+["Sports & Games", [["rugby", "American football"], ["baseball", "softball"], ["pool", "billiards", "snooker"], ["downhill skiing", "cross-country skiing"]]],
+["Weather & Earth", [["hurricane", "typhoon", "cyclone"], ["tornado watch", "tornado warning"], ["lava", "magma"], ["sleet", "hail"]]],
+["Big Decisions", [["renting a home", "buying a home"], ["leasing a car", "buying a car"], ["term life insurance", "whole life insurance"], ["15-year mortgage", "30-year mortgage"]]],
+["Other: My Own Pair", []]
+];
+
+let lesson = null, busy = false, followUp = "", reqId = 0, lastQuestion = "", figs = [];
+let narrStarted = false, narrTimer = 0, pStarts = [], lastCi = -1, pendingMore = null, audioP = null, silentMode = false;
+let groups = [], shown = 0, manual = false, lastProgress = 0, boardStart = 0, boardOff = false, lastReveal = 0, pumpTimer = 0, liveBoard = false, boardDone = true;
+let words = [], speech = "";
+let shortNode = null, shortId = 0;
+let ctx = null, srcNode = null, lastAudio = null, raf = 0, voiceOff = false, speaking = false;
+let depth = "quick", chosenLevel = "quick", lead = 0;
+
+/* ---------- the compare boxes ---------- */
+// Turns "what's the difference between a stock and a bond" or "stock vs bond" into ["a stock", "a bond"]
+function parsePair(str){
+  let t = String(str || "").trim().replace(/[?.!]+$/, "");
+  t = t.replace(/^(what'?s|whats|what is|what are|tell me|explain|show me)\s+/i, "").replace(/^the\s+differences?\s+/i, "").replace(/^differences?\s+/i, "").replace(/^between\s+/i, "").replace(/^compare\s+/i, "");
+  let parts = t.split(/\s+(?:vs\.?|versus)\s+/i);
+  if (parts.length < 2) parts = t.split(/\s*,\s*(?:and\s+|or\s+)?|\s+(?:and|or)\s+/i);
+  parts = parts.map(x => x.trim()).filter(Boolean);
+  if (parts.length > 3) parts = [parts[0], parts[1], parts.slice(2).join(" and ")];
+  return parts.map(x => x.slice(0, 80));
+}
+function showThird(on){
+  $("cWrap").classList.toggle("hide", !on);
+  $("addC").textContent = on ? "✕ Remove third" : "＋ Add a third";
+  if (!on) $("c").value = "";
+}
+function fillBoxes(parts){
+  if (typeof parts === "string") parts = parsePair(parts);
+  $("a").value = parts[0] || ""; $("b").value = parts[1] || "";
+  showThird(!!parts[2]); $("c").value = parts[2] || "";
+}
+function compose(){ return ["a", "b", "c"].map(id => $(id).value.trim()).filter(Boolean).join(" vs "); }
+$("addC").onclick = () => { const on = $("cWrap").classList.contains("hide"); showThird(on); if (on) $("c").focus(); };
+function track(name, data){ try { window.va("event", { name, data }); } catch(e) {} }
+function toast(msg){ const el = $("toast"); el.textContent = msg; el.classList.add("on"); setTimeout(() => el.classList.remove("on"), 2200); }
+
+let topicSel = 0;
+function renderStarters(){
+  const box = $("starters"); box.innerHTML = "";
+  const th = document.createElement("div"); th.className = "th";
+  const tb = document.createElement("b"); tb.textContent = "Choose a topic"; th.appendChild(tb);
+  const ts = document.createElement("span"); ts.textContent = "15 topics · tap one, then a starter pair"; th.appendChild(ts);
+  box.appendChild(th);
+  const tiles = document.createElement("div"); tiles.className = "tiles";
+  TOPICS.forEach((t, i) => {
+    const b = document.createElement("button"); b.className = "tile" + (i === topicSel ? " on" : "");
+    b.setAttribute("aria-pressed", i === topicSel ? "true" : "false");
+    const n = document.createElement("span"); n.className = "n"; n.textContent = String(i + 1).padStart(2, "0"); b.appendChild(n);
+    b.appendChild(document.createTextNode(t[0]));
+    b.onclick = () => {
+      topicSel = i; renderStarters();
+      if (!t[1].length) { $("a").focus(); $("hint").textContent = "Type any two things, or tap the mic and say them: \u201Ccompare this and that.\u201D"; }
+    };
+    tiles.appendChild(b);
+  });
+  box.appendChild(tiles);
+  const qs = TOPICS[topicSel][1];
+  if (qs.length) {
+    const wrap = document.createElement("div"); wrap.className = "qs";
+    const ql = document.createElement("div"); ql.className = "ql"; ql.textContent = "Starter pairs · " + TOPICS[topicSel][0]; wrap.appendChild(ql);
+    const row = document.createElement("div"); row.className = "qrow";
+    qs.forEach(q => { const b = document.createElement("button"); b.className = "qbtn"; b.textContent = q.join(" vs "); b.onclick = () => { unlock(); setDepth(chosenLevel); fillBoxes(q); $("q").value = compose(); ask(); }; row.appendChild(b); });
+    wrap.appendChild(row); box.appendChild(wrap);
+  }
+}
+
+/* ---------- Quick vs Full ---------- */
+function setDepth(d){
+  depth = d; $("dQuick").classList.toggle("on", d === "quick"); $("dFull").classList.toggle("on", d === "full");
+  if (d !== "simple") { chosenLevel = d; try { localStorage.setItem("wtd_level", d); } catch(e) {} }
+}
+$("dQuick").onclick = () => setDepth("quick");
+$("dFull").onclick = () => setDepth("full");
+
+/* ---------- audio unlock ---------- */
+function unlock(){
+  try { if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === "suspended") ctx.resume(); } catch(e) {}
+  try { if ("speechSynthesis" in window) { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); } } catch(e) {}
+}
+
+/* ---------- voice choice ---------- */
+let voicePref = "man";
+try { if (localStorage.getItem("wtd_voice") === "woman") voicePref = "woman"; } catch(e) {}
+function setVoicePref(p){
+  voicePref = p;
+  $("vMan").classList.toggle("on", p === "man"); $("vWoman").classList.toggle("on", p === "woman");
+  try { localStorage.setItem("wtd_voice", p); } catch(e) {}
+}
+/* ---------- voice speed ---------- */
+let speedPref = "normal";
+try { if (localStorage.getItem("wtd_speed") === "slow") speedPref = "slow"; } catch(e) {}
+function setSpeed(p){
+  if (p !== speedPref) lastAudio = null;   // re-fetch the voice at the new speed
+  speedPref = p;
+  $("sNormal").classList.toggle("on", p === "normal"); $("sSlow").classList.toggle("on", p === "slow");
+  try { localStorage.setItem("wtd_speed", p); } catch(e) {}
+}
+$("sNormal").onclick = () => { setSpeed("normal"); unlock(); sayShort("Normal speed."); };
+$("sSlow").onclick = () => { setSpeed("slow"); unlock(); sayShort("Slower speed."); };
+setTimeout(() => setSpeed(speedPref), 0);
+$("vMan").onclick = () => { setVoicePref("man"); unlock(); sayShort("Welcome to What's the Difference."); };
+$("vWoman").onclick = () => { setVoicePref("woman"); unlock(); sayShort("Welcome to What's the Difference."); };
+
+const MALE_RE = /\bmale\b|christopher|roger|eric|guy|davis|tom|daniel|ryan|thomas|brian|andrew|aaron|alex|david|mark|fred|arthur|oliver/i, FEMALE_RE = /female|michelle|jenny|samantha|allison|ava|aria|emma|sonia|libby|susan|serena|kate|zira|joanna|google us english|google uk english female/i;
+function pitchFor(v, base){
+  return base;   // lowering the pitch of a female phone voice sounded like an older woman, so the fallback keeps the natural voice
+}
+// Some phone voices never report which word they are on; then estimate it from the clock so the board keeps up
+let estTimer = 0, estStart = 0, lastBoundary = 0;
+function startEstimate(total, rate){
+  clearInterval(estTimer); estStart = Date.now(); lastBoundary = 0;
+  const cps = 14.5 * rate;
+  estTimer = setInterval(() => {
+    if (!speaking) return;
+    if (lastBoundary && Date.now() - lastBoundary < 1500) return;
+    const ci = Math.min(total - 1, Math.floor((Date.now() - estStart) / 1000 * cps));
+    highlight(ci); onProgress(ci / total);
+  }, 300);
+}
+function stopEstimate(){ clearInterval(estTimer); estTimer = 0; }
+function pickVoice(){
+  const vs = speechSynthesis.getVoices().filter(v => /^en(-|_)(US|GB)/i.test(v.lang));
+  const male = /\bmale\b|christopher|roger|eric|guy|davis|tom|daniel|ryan|thomas|brian|andrew|aaron|alex|david|mark|fred|arthur|oliver/i;
+  const female = /female|michelle|jenny|samantha|allison|ava|aria|emma|sonia|libby|susan|serena|kate|zira|joanna|google us english|google uk english female/i;
+  const want = voicePref === "woman" ? (v => female.test(v.name)) : (v => male.test(v.name) && !female.test(v.name));
+  const natural = vs.filter(v => /natural|online|enhanced|premium/i.test(v.name) && want(v));
+  const pool = natural.length ? natural : vs.filter(want);
+  return pool[1] || pool[0] || vs[0] || null;
+}
+
+/* ---------- microphone ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, listening = false, micTarget = "q";
+function startListening(){
+  if (!rec) { $("a").focus(); return; }
+  micTarget = "q";
+  try { stopVoice(); rec.start(); listening = true; $("mic").classList.add("listening"); $("mic").textContent = "👂"; $("hint").textContent = "Listening… say the two things, like \u201Cstock and bond.\u201D"; } catch(e) {}
+}
+if (!SR) {
+  // This browser can't turn speech into text, so open the keyboard: every phone keyboard has its own 🎤
+  const kb = "Tap the red mic, then the 🎤 on your keyboard to speak. Or just type.";
+  $("hint").textContent = kb;
+  $("mic").onclick = () => { unlock(); $("a").focus(); $("hint").textContent = kb; };
+} else {
+  rec = new SR(); rec.lang = "en-US"; rec.interimResults = true; rec.continuous = false;
+  rec.onresult = e => { let s = ""; for (const r of e.results) s += r[0].transcript; $(micTarget).value = s; if (micTarget === "q") fillBoxes(s); };
+  rec.onend = () => {
+    listening = false;
+    if (micTarget === "fq") {
+      micTarget = "q"; $("fMic").classList.remove("listening"); $("fMic").textContent = "🎤";
+      $("fStatus").textContent = $("fq").value.trim() ? "Look right? Tap " + $("fGo").textContent + "." : (followMode === "more" ? "" : "Didn't catch that. Tap the mic and try again.");
+      return;
+    } $("mic").classList.remove("listening"); $("mic").textContent = "🎤";
+    if ($("a").value.trim() && $("b").value.trim()) { $("hint").textContent = "Look right? Tap Compare. (Or tap the mic to try again.)"; $("go").classList.add("ready"); }
+    else if ($("a").value.trim()) { $("hint").textContent = "Got the first one. Type the second thing, or tap the mic and say both."; $("b").focus(); }
+    else $("hint").textContent = "Didn't catch that. Tap the mic and try again.";
+  };
+  rec.onerror = e => { if (e.error === "not-allowed" || e.error === "service-not-allowed") $(micTarget === "fq" ? "fStatus" : "hint").textContent = "Microphone is blocked. Allow it in your browser, or type instead."; };
+  $("mic").onclick = () => { unlock(); if (listening) { rec.stop(); return; } $("q").value = ""; fillBoxes([]); $("go").classList.remove("ready"); startListening(); };
+}
+// Compare reads the boxes; it needs at least two things
+function goAsk(){
+  setDepth(chosenLevel);
+  unlock();
+  const filled = ["a", "b", "c"].filter(id => $(id).value.trim());
+  if (filled.length < 2) {
+    $("hint").textContent = filled.length ? "Add a second thing to compare it with." : "Type the two things you want to compare.";
+    $(!$("a").value.trim() ? "a" : "b").focus();
+    return;
+  }
+  $("q").value = compose();
+  ask();
+}
+$("go").onclick = goAsk;
+["a", "b", "c"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") goAsk(); }));
+
+/* ---------- follow-up box (Ask about this / Go deeper) right under the buttons ---------- */
+let followMode = "", followTitle = "", followPrev = "";
+const WORKING = "⏳ Working on it… lining up the comparison.";
+function openFollow(mode, title, prev){
+  const clean = String(title || "").replace(/[?!.]+$/, "");
+  followMode = mode; followTitle = title; followPrev = prev;
+  $("fLabel").textContent = mode === "about" ? "What would you like to know about " + clean + "?" : "Which part of " + clean + " should we dig into?";
+  $("fq").placeholder = mode === "about" ? "Type your question, or tap the mic to say it…" : "Type a part, or leave it empty to go deeper on all of it";
+  $("fGo").textContent = mode === "about" ? "Ask" : "Go deeper"; $("fGo").disabled = false;
+  $("fq").value = ""; $("fStatus").textContent = "";
+  $("askAbout").classList.toggle("on", mode === "about"); $("goDeeper").classList.toggle("on", mode === "more");
+  $("followBox").classList.remove("hide");
+  $("fq").focus({ preventScroll: true });
+  try { $("followBox").scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch(e) {}
+}
+function fListen(){
+  unlock();
+  if (!rec) { $("fq").focus(); $("fStatus").textContent = "Tap the 🎤 on your keyboard to speak, or just type."; return; }
+  if (listening) { rec.stop(); return; }
+  try { stopVoice(); micTarget = "fq"; $("fq").value = ""; rec.start(); listening = true; $("fMic").classList.add("listening"); $("fMic").textContent = "👂"; $("fStatus").textContent = "👂 Listening… ask your question."; } catch(e) {}
+}
+function sendFollow(){
+  unlock(); if (busy) return;
+  const text = $("fq").value.trim();
+  if (followMode === "about" && !text) { $("fStatus").textContent = "Type or say your question first."; $("fq").focus(); return; }
+  if (listening) { try { rec.stop(); } catch(e) {} }
+  $("fGo").disabled = true; $("fGo").textContent = "⏳"; $("fStatus").textContent = WORKING;
+  if (followMode === "about") ask(text, followTitle, { scroll: true });
+  else ask(text || "Go deeper on " + followTitle, followTitle, { more: true, prev: followPrev, scroll: true });
+}
+$("fGo").onclick = sendFollow;
+$("fq").addEventListener("keydown", e => { if (e.key === "Enter") sendFollow(); });
+$("fMic").onclick = fListen;
+// Brings the board into view. Inside the website frame, the page around it does the scrolling.
+function toBoard(){
+  const b = document.querySelector(".board-wrap");
+  if (window.parent !== window) { try { window.parent.postMessage({ type: "pp-scroll-top", y: b ? b.getBoundingClientRect().top + window.pageYOffset : 0 }, "*"); } catch(e) {} }
+  else { try { b.scrollIntoView({ behavior: "smooth", block: "start" }); } catch(e) {} }
+}
+
+/* ---------- asking: words and figures are fetched at the same time ---------- */
+const norm = s => s.toLowerCase().replace(/[?!.,]+/g, " ").replace(/\s+/g, " ").trim();
+async function fetchPart(part, question, context, opts){
+  let r;
+  if (!context && !opts.more) r = await fetch(`/api/ask?part=${part}&depth=${depth}&v=1&q=${encodeURIComponent(norm(question))}`);
+  else r = await fetch("/api/ask", { method:"POST", headers:{ "content-type":"application/json" },
+    body: JSON.stringify({ part, question, depth, context: context || "", more: !!opts.more, prev: opts.prev || "" }) });
+  const d = await r.json().catch(() => null);
+  return { ok: r.ok, status: r.status, d };
+}
+// Reads the figures as they stream in: one finished figure per line, shown right away.
+async function streamBoard(question, context, opts, a, onFig){
+  let r;
+  if (!context && !opts.more) r = await fetch(`/api/ask?part=board&depth=${depth}&v=1&q=${encodeURIComponent(norm(question))}&a=${encodeURIComponent(a)}`);
+  else r = await fetch("/api/ask", { method:"POST", headers:{ "content-type":"application/json" },
+    body: JSON.stringify({ part: "board", question, depth, context: context || "", more: !!opts.more, prev: opts.prev || "", a }) });
+  if (!r.ok) throw new Error("H" + r.status);
+  let n = 0, buf = "";
+  const handle = line => {
+    if (!line.trim()) return;
+    let o; try { o = JSON.parse(line); } catch(e) { return; }
+    if (Array.isArray(o.figures)) o.figures.forEach(f => { n++; onFig(f); });
+    else if (Array.isArray(o.steps)) o.steps.forEach(f => { n++; onFig(f); });
+    else if (o.svg !== undefined) { n++; onFig(o); }
+  };
+  if (r.body && r.body.getReader) {
+    const reader = r.body.getReader(), dec = new TextDecoder();
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i; while ((i = buf.indexOf("\n")) >= 0) { handle(buf.slice(0, i)); buf = buf.slice(i + 1); }
+    }
+    handle(buf);
+  } else (await r.text()).split("\n").forEach(handle);
+  return n;
+}
+// Adds a figure; the first shows right away, later ones at most every 7 seconds.
+function addFig(f){
+  figs.push(f);
+  const g = sanitize(f.svg || "") || document.createElementNS(NS, "g");
+  g.style.display = "none"; g.dataset.title = f.title || ""; g.dataset.caption = f.caption || "";
+  g._legend = realItems(f.legend, "symbol", "meaning"); g._formulas = realItems(f.formulas, "formula", "explanation");
+  g.querySelectorAll("text").forEach(el => el.addEventListener("click", () => { if (!speaking) sayShort(el.textContent); }));
+  $("svg").appendChild(g); groups.push(g);
+  $("thinking").classList.remove("on");
+  updateCtrls();
+  if (silentMode) { pump(); return; }              // shared link: nobody is talking, so flip on a timer
+  if (!narrStarted) { if (!shown) showFigure(0); startNarration(); }
+  else syncBoard(lastCi);
+}
+// The narration waits for the first view, then each view appears when the narrator reaches its section
+function startNarration(){
+  if (narrStarted || silentMode) return;
+  narrStarted = true; clearTimeout(narrTimer);
+  const my = reqId;
+  (audioP || Promise.resolve(null)).then(a => {
+    if (my !== reqId) return;
+    if (a) playBuffer(a); else browserVoice(speech);
+  });
+}
+function paraAt(ci){
+  if (ci === Infinity) return Infinity;
+  let p = 0; for (let i = 0; i < pStarts.length; i++) if (pStarts[i] <= ci) p = i;
+  return p;
+}
+function syncBoard(ci){
+  if (manual || boardOff || !liveBoard || silentMode || !groups.length) return;
+  const want = Math.min(Math.max(0, paraAt(ci) - lead), groups.length - 1);
+  if (want > shown - 1) showFigure(want);
+}
+function pump(){
+  clearTimeout(pumpTimer);
+  if (manual || shown >= groups.length) return;
+  const wait = lastReveal ? lastReveal + 7000 - Date.now() : 0;
+  if (wait > 0) { pumpTimer = setTimeout(pump, wait); return; }
+  revealNext(); lastReveal = Date.now();
+  if (shown < groups.length) pumpTimer = setTimeout(pump, 7000);
+}
+
+async function ask(text, context, opts){
+  opts = opts || {};
+  if (!context && followUp) context = followUp;
+  followUp = "";
+  let question = (text || $("q").value).trim();
+  if (!question || busy) return;
+  if (!opts.more) pendingMore = null;
+  const my = ++reqId;
+  busy = true; $("go").disabled = true; $("go").classList.remove("ready");
+  stopVoice(); $("thinkText").textContent = "Thinking..."; $("thinking").classList.add("on");
+  $("hint").textContent = "Lining up your comparison…";
+
+  // the words come first; then each section gets its own view
+  boardOff = false; lastReveal = 0; clearTimeout(pumpTimer); clearTimeout(narrTimer); figs = [];
+  narrStarted = false; lastCi = -1; audioP = null; silentMode = !!opts.silent;
+  buildBoard([]); liveBoard = true; boardDone = false;
+
+  let data = null, reason = "N0";
+  for (let attempt = 0; attempt < 2 && !data; attempt++) {
+    if (attempt === 1) $("hint").textContent = "One more moment…";
+    try {
+      const x = await fetchPart("lecture", question, context, opts);
+      if (x.d && Array.isArray(x.d.answer) && x.d.answer.length) data = x.d;
+      else reason = (x.d && x.d.reason) || ("H" + x.status);
+    } catch(e) { reason = "N0"; }
+  }
+  if (my !== reqId) return;
+  busy = false; $("go").disabled = false;
+  if (!data) {
+    lesson = null; stopVoice(); boardOff = true; clearTimeout(pumpTimer); $("thinking").classList.remove("on");
+    $("title").textContent = "The signal dropped.";
+    $("read").innerHTML = "<p>Something went wrong. Please try your comparison again.</p>";
+    const code = document.createElement("p"); code.style.cssText = "font-size:12px;color:#98a1a9;font-family:Inter,sans-serif";
+    code.textContent = "Code: " + reason; $("read").appendChild(code);
+    ["playrow","side","deepCard","matchCard"].forEach(id => $(id).classList.add("hide"));
+    buildBoard([{ title: "", caption: "Try again", svg: blankCard() }]); showFigure(0);
+    $("hint").textContent = "Tap Compare to try again.";
+    if (opts.scroll) toBoard();
+    return;
+  }
+  if (!context && !opts.more) lastQuestion = question;
+  lesson = data; render(opts);
+  if (opts.scroll) toBoard();
+  $("hint").textContent = "Compare another pair anytime.";
+  track("comparison", { topic: String(data.title || "").slice(0, 80), depth, type: data.type });
+
+  if (data.type !== "lecture") { boardOff = true; $("thinking").classList.remove("on"); return; }
+  $("thinkText").textContent = "Lining them up..."; $("thinking").classList.add("on");
+  if (!silentMode) narrTimer = setTimeout(startNarration, 15000);   // safety valve if a figure is slow
+  const parts = (data.answer || []).map(x => typeof x === "string" ? { heading: "", text: x } : x);
+  const a = parts.map(x => ((x.heading ? x.heading + ": " : "") + (x.text || "")).trim()).filter(Boolean).slice(0, 5).map(x => x.slice(0, 900)).join("\n");
+  let total = 0;
+  for (let k = 0; k < 2 && total === 0 && my === reqId; k++) {
+    try { total += await streamBoard(question, context, opts, a, f => { if (my === reqId && !boardOff) addFig(f); }); }
+    catch(e) {}
+  }
+  if (my !== reqId) return;
+  boardDone = true; $("thinking").classList.remove("on");
+  if (!total && !groups.length) { boardOff = true; figs = [{ title: "", caption: "", svg: blankCard() }]; buildBoard(figs); showFigure(0); }
+  else if (shown > 0) setCaption(shown - 1);
+  startNarration();
+  syncBoard(lastCi);
+}
+
+/* ---------- render ---------- */
+function render(opts){
+  const L = lesson, isLec = L.type === "lecture";
+  $("title").textContent = L.title || "What's the difference?";
+  const parts = (L.answer || []).map(a => typeof a === "string" ? { heading: "", text: a } : a);
+  const items = isLec && Array.isArray(L.items) ? L.items.slice(0, 3) : [];
+  document.querySelector(".board").classList.toggle("three", items.length === 3);
+  // the one-sentence short answer is read first, then the four sections
+  lead = isLec && L.one_line ? 1 : 0;
+  if (lead) parts.unshift({ heading: "The short answer", text: L.one_line, lede: true });
+  renderMatch(items, isLec ? L.rows : []);
+  speech = parts.map(a => a.text).join(" ");
+  words = []; let offset = 0; const read = $("read"); read.innerHTML = ""; pStarts = [];
+  parts.forEach(a => {
+    pStarts.push(offset);
+    if (a.heading) { const h = document.createElement("h4"); h.textContent = a.heading; read.appendChild(h); }
+    const el = document.createElement("p"); if (a.lede) el.className = "lede";
+    a.text.replace(/\S+|\s+/g, (tok, i) => {
+      if (/\S/.test(tok)) { const s = document.createElement("span"); s.className = "w"; s.textContent = tok; el.appendChild(s); words.push({ el: s, start: offset + i, t: null }); }
+      else el.appendChild(document.createTextNode(tok));
+      return tok;
+    });
+    read.appendChild(el); offset += a.text.length + 1;
+  });
+  $("playrow").classList.remove("hide");
+  $("thumbs").classList.toggle("hide", !isLec); $("share").classList.toggle("hide", !isLec); $("pdf").classList.toggle("hide", !isLec);
+  $("helpful").textContent = "Helpful?"; $("up").disabled = false; $("down").disabled = false;
+
+  if (!isLec) { boardOff = true; clearTimeout(pumpTimer); figs = []; buildBoard([{ title: "", caption: L.type === "help" ? "You matter." : "Try another pair.", svg: blankCard() }]); showFigure(0); }
+
+  ["side","termsCard","factCard","mythCard","deepCard"].forEach(id => $(id).classList.add("hide"));
+  if (isLec) {
+    const tb = $("terms"); tb.innerHTML = "";
+    (L.terms || []).forEach(x => { if (!x || !x.word) return; const d = document.createElement("div"); d.innerHTML = "<b></b>: <span></span>"; d.querySelector("b").textContent = x.word; d.querySelector("span").textContent = x.meaning || ""; tb.appendChild(d); });
+    if (tb.children.length) { $("termsCard").classList.remove("hide"); $("side").classList.remove("hide"); }
+    if (L.memory) { $("fact").textContent = L.memory; $("factCard").classList.remove("hide"); $("side").classList.remove("hide"); }
+    if (L.misconception) { $("myth").textContent = L.misconception; $("mythCard").classList.remove("hide"); $("side").classList.remove("hide"); }
+
+    const row = $("deeper"); row.innerHTML = "";
+    (L.deeper || []).slice(0, 3).forEach(q => { const b = document.createElement("button"); b.className = "chip"; b.textContent = q; b.onclick = () => { if (busy) return; unlock(); b.textContent = "⏳ " + q; $("fStatus").textContent = WORKING; const p = parsePair(q); if (p.length >= 2) { setDepth(chosenLevel); fillBoxes(p); $("q").value = compose(); ask(compose(), "", { scroll: true }); } else ask(q, L.title, { scroll: true }); }; row.appendChild(b); });
+    document.querySelector(".deeper .sub").classList.toggle("hide", !row.children.length);
+    const prevSpeech = speech;
+    $("followBox").classList.add("hide"); $("fStatus").textContent = "";
+    $("askAbout").classList.remove("on"); $("goDeeper").classList.remove("on");
+    $("goDeeper").onclick = () => { unlock(); openFollow("more", L.title, prevSpeech); };
+    $("askAbout").onclick = () => { unlock(); openFollow("about", L.title, prevSpeech); };
+    $("deepCard").classList.remove("hide");
+  }
+  if (opts && opts.silent) { $("again").textContent = "🔊 Hear it"; }
+  else if (!isLec) speak();
+  else audioP = prepareAudio();   // fetch the voice now so it's ready when the first view lands
+}
+
+function blankCard(){
+  return "<circle cx='350' cy='215' r='95' fill='none' stroke='#ff8a65' stroke-width='4'/><circle cx='450' cy='215' r='95' fill='none' stroke='#4cc3ff' stroke-width='4'/><text x='400' y='240' text-anchor='middle' font-family='Inter' font-weight='800' font-size='72' fill='#ffd23f'>?</text><text x='400' y='400' text-anchor='middle' font-family='Inter' font-size='32' fill='#ffffff'>What do you want to compare?</text>";
+}
+
+/* ---------- side-by-side table: every point lines up across the items ---------- */
+function renderMatch(items, rows){
+  const box = $("match"); box.innerHTML = "";
+  rows = Array.isArray(rows) ? rows.filter(r => r && r.point && Array.isArray(r.values) && r.values.length === items.length) : [];
+  if (items.length < 2 || !rows.length) { $("matchCard").classList.add("hide"); return; }
+  const cls = ["a", "b", "c"];
+  const t = document.createElement("table"); t.className = "mt" + (items.length === 3 ? " three" : "");
+  const hr = t.createTHead().insertRow();
+  const corner = document.createElement("th"); corner.className = "pt"; corner.setAttribute("aria-label", "Point of comparison"); hr.appendChild(corner);
+  items.forEach((name, i) => { const th = document.createElement("th"); th.scope = "col"; th.className = "c" + cls[i]; th.textContent = name; hr.appendChild(th); });
+  const tb = t.createTBody();
+  rows.forEach(r => {
+    const tr = tb.insertRow();
+    const th = document.createElement("th"); th.scope = "row"; th.className = "pt"; th.textContent = r.point; tr.appendChild(th);
+    r.values.forEach((v, i) => { const td = tr.insertCell(); td.className = "v" + cls[i]; td.textContent = v; });
+  });
+  box.appendChild(t); $("matchCard").classList.remove("hide");
+}
+
+/* ---------- share + PDF + feedback ---------- */
+$("share").onclick = async () => {
+  const q = lastQuestion || (lesson && lesson.title) || "";
+  const url = location.origin + "/?q=" + encodeURIComponent(q) + (depth === "quick" ? "&d=quick" : "");
+  track("share", { topic: String(lesson && lesson.title || "").slice(0, 80) });
+  try { if (navigator.share) { await navigator.share({ title: (lesson && lesson.title) || "What's the Difference?", url }); return; } } catch(e) { return; }
+  try { await navigator.clipboard.writeText(url); toast("Link copied. Paste it anywhere to share."); }
+  catch(e) { window.prompt("Copy this link to share:", url); }
+};
+$("pdf").onclick = () => { track("pdf", { topic: String(lesson && lesson.title || "").slice(0, 80) }); window.print(); };
+window.addEventListener("beforeprint", () => {
+  const box = $("printFigs"); box.innerHTML = "";
+  figs.forEach(f => {
+    const fig = document.createElement("figure");
+    const svg = document.createElementNS(NS, "svg"); svg.setAttribute("viewBox", "0 0 800 500");
+    const g = sanitize(f.svg || ""); if (g) svg.appendChild(g);
+    const cap = document.createElement("figcaption"); cap.textContent = [f.title, f.caption].filter(Boolean).join(": ");
+    fig.appendChild(svg); fig.appendChild(cap);
+    if (Array.isArray(f.legend) && f.legend.length) { const lg = document.createElement("div"); lg.className = "plegend"; lg.textContent = "Symbols: " + f.legend.map(l => l.symbol + " = " + l.meaning).join("  ·  "); fig.appendChild(lg); }
+    (realItems(f.formulas, "formula", "explanation")).forEach(x => { const lg = document.createElement("div"); lg.className = "plegend"; lg.textContent = x.formula + ": " + x.explanation; fig.appendChild(lg); });
+    box.appendChild(fig);
+  });
+});
+function vote(v){
+  if (!lesson) return;
+  track("feedback", { vote: v, topic: String(lesson.title || "").slice(0, 80), depth });
+  $("helpful").textContent = "Thanks!"; $("up").disabled = true; $("down").disabled = true;
+}
+$("up").onclick = () => vote("up");
+$("down").onclick = () => vote("down");
+
+/* ---------- the board: safe SVG, one view at a time ---------- */
+const OK_TAGS = new Set(["g","path","line","circle","ellipse","rect","polyline","polygon","text","tspan"]);
+// Drops filler legend rows like "none = none" that the AI sometimes adds
+const EMPTY_ITEM = /^\s*(none|n\/a|na|null|-+|—)?\s*\.?\s*$/i;
+function realItems(list, k1, k2){ return Array.isArray(list) ? list.filter(x => x && !EMPTY_ITEM.test(String(x[k1] || "")) && !EMPTY_ITEM.test(String(x[k2] || ""))) : []; }
+function sanitize(markup){
+  const doc = new DOMParser().parseFromString(`<svg xmlns="${NS}">${markup}</svg>`, "image/svg+xml");
+  let root = doc.documentElement;
+  // The AI sometimes leaves a tag unclosed; the forgiving HTML reader closes it instead of dropping the whole drawing
+  if (doc.querySelector("parsererror")) {
+    root = new DOMParser().parseFromString(`<svg xmlns="${NS}">${markup}</svg>`, "text/html").querySelector("svg");
+    if (!root) return null;
+  }
+  const out = document.createElementNS(NS, "g");
+  const copy = (src, dst) => {
+    for (const n of src.childNodes) {
+      if (n.nodeType === 3) { dst.appendChild(document.createTextNode(n.textContent)); continue; }
+      if (n.nodeType !== 1 || !OK_TAGS.has(n.localName)) continue;
+      const el = document.createElementNS(NS, n.localName);
+      for (const a of n.attributes) {
+        const name = a.name.toLowerCase(), val = a.value;
+        if (name.startsWith("on") || name.includes("href") || /url\(|javascript:|expression/i.test(val)) continue;
+        el.setAttribute(a.name, val);
+      }
+      copy(n, el); dst.appendChild(el);
+    }
+  };
+  copy(root, out);
+  return out;
+}
+function buildBoard(list){
+  const svg = $("svg"); svg.innerHTML = ""; groups = []; shown = 0; manual = false; boardStart = 0; liveBoard = false; boardDone = true; renderLegend([]);
+  list.forEach(f => {
+    const g = sanitize(f.svg || "") || document.createElementNS(NS, "g");
+    g.style.display = "none"; g.dataset.title = f.title || ""; g.dataset.caption = f.caption || "";
+    g._legend = realItems(f.legend, "symbol", "meaning");
+    g._formulas = realItems(f.formulas, "formula", "explanation");
+    svg.appendChild(g); groups.push(g);
+  });
+  svg.querySelectorAll("text").forEach(el => el.addEventListener("click", () => { if (!speaking) sayShort(el.textContent); }));
+  $("caption").textContent = list.length > 1 ? "Watch the board." : (list[0] ? list[0].caption || "" : "");
+  updateCtrls();
+}
+function drawGroup(g){
+  groups.forEach(x => { if (x !== g) x.style.display = "none"; });
+  g.style.display = "";
+  g.querySelectorAll("path,line,circle,ellipse,rect,polyline,polygon,text").forEach((el, i) => {
+    const delay = i * 0.1;
+    if (el.tagName === "text" || el.tagName === "tspan") {
+      el.style.transition = "none"; el.style.opacity = 0;
+      requestAnimationFrame(() => { el.style.transition = `opacity .5s ${delay + .3}s`; el.style.opacity = 1; });
+      return;
+    }
+    let len = 0; try { len = el.getTotalLength(); } catch(e) {}
+    const fill = el.getAttribute("fill"); const hasFill = fill && fill !== "none" && fill !== "transparent";
+    const fo = el.getAttribute("fill-opacity") || "1";
+    el.style.transition = "none";
+    if (len > 0 && el.getAttribute("stroke")) { el.style.strokeDasharray = len; el.style.strokeDashoffset = len; }
+    if (hasFill) el.style.fillOpacity = 0;
+    el.getBoundingClientRect();
+    requestAnimationFrame(() => {
+      el.style.transition = `stroke-dashoffset 1.2s ease ${delay}s, fill-opacity .6s ease ${delay + .8}s`;
+      el.style.strokeDashoffset = 0; if (hasFill) el.style.fillOpacity = fo;
+    });
+  });
+}
+// Keeps words readable: a board-colored outline so they show over drawings, and words that overlap get nudged apart.
+function tidyText(g){
+  if (!g || g._tidy) return; g._tidy = true;
+  const texts = [...g.querySelectorAll("text")];
+  texts.forEach(el => { el.style.paintOrder = "stroke"; el.style.stroke = "#0a0f1f"; el.style.strokeWidth = "7px"; el.style.strokeLinejoin = "round"; });
+  // Shrinks a label that spills out of the box it sits in, so words stay inside their box.
+  const boxes = [...g.querySelectorAll("rect")].map(r => { try { return r.getBBox(); } catch(e) { return null; } }).filter(Boolean);
+  texts.forEach(el => {
+    let b; try { b = el.getBBox(); } catch(e) { return; }
+    if (!b.width) return;
+    const cx = b.x + 4, cy = b.y + b.height / 2;
+    const box = boxes.filter(r => cx >= r.x && cx <= r.x + r.width && cy >= r.y && cy <= r.y + r.height).sort((p, q) => p.width * p.height - q.width * q.height)[0];
+    if (!box) return;
+    const room = box.x + box.width - 8 - b.x;
+    if (b.width > room && room > 20) {
+      const fs = parseFloat(el.getAttribute("font-size")) || 18;
+      el.setAttribute("font-size", Math.max(11, Math.floor(fs * room / b.width)));
+    }
+  });
+  const placed = [], pad = 4;
+  const hit = (a, b) => a.x < b.x + b.width + pad && b.x < a.x + a.width + pad && a.y < b.y + b.height + pad && b.y < a.y + a.height + pad;
+  const move = (el, dx, dy) => {
+    const kids = el.querySelectorAll("tspan[x],tspan[y]");
+    [el, ...kids].forEach(n => {
+      if (dx && n.hasAttribute("x")) n.setAttribute("x", (parseFloat(n.getAttribute("x")) || 0) + dx);
+      if (dy && n.hasAttribute("y")) n.setAttribute("y", (parseFloat(n.getAttribute("y")) || 0) + dy);
+    });
+  };
+  texts.forEach(el => {
+    let b; try { b = el.getBBox(); } catch(e) { return; }
+    if (!b.width) return;
+    if (b.x < 8) { move(el, 8 - b.x, 0); }
+    else if (b.x + b.width > 792) { move(el, 792 - b.x - b.width, 0); }
+    b = el.getBBox();
+    if (b.y + b.height > 494) move(el, 0, 494 - b.y - b.height);   // pull words back onto the board
+    else if (b.y < 6) move(el, 0, 6 - b.y);
+    for (let n = 0; n < 8; n++) {
+      b = el.getBBox();
+      const o = placed.find(p => hit(b, p)); if (!o) break;
+      let dy = o.y + o.height + pad + 2 - b.y;             // try just below the word it bumps into
+      if (b.y + dy + b.height > 496) dy = o.y - pad - 2 - b.height - b.y;   // no room below: go above
+      move(el, 0, dy);
+    }
+    try { placed.push(el.getBBox()); } catch(e) {}
+  });
+}
+function showFigure(i){
+  if (i < 0 || i >= groups.length) return;
+  drawGroup(groups[i]); tidyText(groups[i]); shown = i + 1;
+  setCaption(i);
+  updateCtrls();
+}
+// "(1 of 3)" only once we know how many figures there are
+function setCaption(i){
+  const g = groups[i], cap = $("caption"); if (!g) return; cap.innerHTML = "";
+  const count = groups.length > 1 && (!liveBoard || boardDone) ? ` (${i + 1} of ${groups.length}) ` : " ";
+  if (g.dataset.title) { const b = document.createElement("b"); b.textContent = g.dataset.title + count; cap.appendChild(b); }
+  cap.appendChild(document.createTextNode(g.dataset.caption || ""));
+  renderLegend(g._legend, g._formulas);
+}
+function revealNext(){ if (shown < groups.length) showFigure(shown); }
+function renderLegend(list, formulas){
+  const box = $("legend"); box.innerHTML = "";
+  list = list || []; formulas = formulas || [];
+  if (!list.length && !formulas.length) { box.classList.add("hide"); return; }
+  if (list.length) {
+    const tt = document.createElement("div"); tt.className = "lt"; tt.textContent = "Symbols on this view"; box.appendChild(tt);
+    list.forEach(l => { const d = document.createElement("span"); const b = document.createElement("b"); b.textContent = l.symbol; d.appendChild(b); d.appendChild(document.createTextNode("= " + l.meaning)); box.appendChild(d); });
+  }
+  if (formulas.length) {
+    const tt = document.createElement("div"); tt.className = "lt"; tt.textContent = "Formulas explained"; tt.style.marginTop = list.length ? "8px" : "0"; box.appendChild(tt);
+    const fx = document.createElement("div"); fx.className = "fx";
+    formulas.forEach(f => { const d = document.createElement("div"); const b = document.createElement("b"); b.textContent = f.formula; d.appendChild(b); d.appendChild(document.createTextNode(f.explanation)); fx.appendChild(d); });
+    box.appendChild(fx);
+  }
+  box.classList.remove("hide");
+}
+// Gathers every formula drawn on the screen into the "Formulas Explained" card
+function renderFormulas(){
+  const seen = new Set(), list = $("fxList"); list.innerHTML = "";
+  groups.forEach(g => (g._formulas || []).forEach(f => {
+    const k = String(f.formula || "").trim(); if (!k || seen.has(k)) return; seen.add(k);
+    const d = document.createElement("div"); const b = document.createElement("b"); b.textContent = k;
+    d.appendChild(b); d.appendChild(document.createElement("br")); d.appendChild(document.createTextNode(f.explanation || "")); list.appendChild(d);
+  }));
+  $("fxCard").classList.toggle("hide", !seen.size);
+  if (seen.size) $("side").classList.remove("hide");
+}
+function updateCtrls(){
+  renderFormulas();
+  $("prev").disabled = shown <= 1; $("next").disabled = shown >= groups.length; $("replay").disabled = shown === 0;
+  const real = groups.length && groups[0].dataset.title !== "";
+  document.querySelectorAll("#views button").forEach((b, i) => { b.disabled = !real || i >= groups.length; b.classList.toggle("on", real && i === shown - 1); });
+}
+document.querySelectorAll("#views button").forEach((b, i) => { b.onclick = () => { if (i < groups.length) { manual = true; flipStopped = true; showFigure(i); } }; });
+$("simpler").onclick = () => {
+  if (busy || !lesson) return; unlock();
+  setDepth("simple");
+  ask(lastQuestion || lesson.title || "", "", { scroll: true });
+};
+$("next").onclick = () => { manual = true; flipStopped = true; revealNext(); };
+$("prev").onclick = () => { manual = true; flipStopped = true; if (shown > 1) showFigure(shown - 2); };
+$("replay").onclick = () => { manual = true; flipStopped = true; if (shown > 0) showFigure(shown - 1); };
+function onProgress(f){ lastProgress = Math.max(lastProgress, f); if (f >= 1) { lastCi = Infinity; syncBoard(Infinity); } }
+// after the talking is done, flip through the figures on a timer (stops if the reader takes over)
+function autoFlip(){
+  const mine = groups;
+  const step = () => { if (groups !== mine || shown >= groups.length || flipStopped) return; showFigure(shown); setTimeout(step, 6000); };
+  flipStopped = false; setTimeout(step, 6000);
+}
+let flipStopped = false;
+
+/* ---------- voice + read-along ---------- */
+function highlight(ci){
+  let k = -1;
+  for (let i = 0; i < words.length; i++) { if (words[i].start <= ci) k = i; else break; }
+  words.forEach((w, i) => { w.el.classList.toggle("on", i === k); w.el.classList.toggle("done", i < k); });
+  if (ci > lastCi) { lastCi = ci; syncBoard(ci); }
+}
+function clearHighlight(){ words.forEach(w => w.el.classList.remove("on","done")); $("read").classList.remove("speaking"); }
+function setSpeaking(on){ speaking = on; $("read").classList.toggle("speaking", on); $("stop").classList.toggle("hide", !on); $("again").classList.toggle("hide", on); if (!on) $("again").textContent = "🔊 Hear it again"; }
+function finish(){ stopEstimate(); setSpeaking(false); words.forEach(w => { w.el.classList.remove("on"); w.el.classList.add("done"); }); onProgress(1); }
+function stopVoice(){
+  cancelAnimationFrame(raf); stopEstimate();
+  try { if (shortNode) shortNode.stop(); } catch(e) {}
+  shortNode = null; shortId++;
+  try { if (srcNode) { srcNode.onended = null; srcNode.stop(); } } catch(e) {}
+  srcNode = null;
+  try { speechSynthesis.cancel(); } catch(e) {}
+  if (speaking) { setSpeaking(false); clearHighlight(); }
+}
+$("stop").onclick = () => { stopVoice(); onProgress(1); };
+$("again").onclick = () => { unlock(); if (lastAudio) playBuffer(lastAudio); else speak(); };
+
+async function speak(){
+  if (!speech) return;
+  const a = await prepareAudio();
+  if (a) playBuffer(a); else browserVoice(speech);
+}
+// Gets the recorded-voice audio (or null, meaning use the browser's voice)
+async function prepareAudio(){
+  if (!speech) return null;
+  lastAudio = null; lastProgress = 0;
+  if (!voiceOff && ctx) {
+    try {
+      const r = await fetch("/api/speak", { method:"POST", headers:{ "content-type":"application/json" }, body: JSON.stringify({ text: speech, voice: voicePref, speed: speedPref }) });
+      if (r.status === 501) voiceOff = true;
+      else if (r.ok) {
+        const d = await r.json();
+        const bytes = Uint8Array.from(atob(d.audio), c => c.charCodeAt(0));
+        const buf = await ctx.decodeAudioData(bytes.buffer);
+        const times = d.alignment && d.alignment.character_start_times_seconds;
+        words.forEach(w => { w.t = times && times[w.start] != null ? times[w.start] : null; });
+        lastAudio = { buf, timed: !!times };
+        return lastAudio;
+      }
+    } catch(e) {}
+  }
+  return null;
+}
+// Evens out loudness so both voices play at the same strong level (a quiet clip gets turned up; a limiter stops distortion)
+function leveled(buf){
+  let sum = 0, n = 0; const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i += 16) { sum += d[i] * d[i]; n++; }
+  const rms = Math.sqrt(sum / Math.max(1, n)) || 0.05;
+  const g = ctx.createGain(); g.gain.value = Math.min(4, Math.max(0.6, 0.16 / rms));
+  const lim = ctx.createDynamicsCompressor();
+  lim.threshold.value = -6; lim.knee.value = 4; lim.ratio.value = 12; lim.attack.value = 0.003; lim.release.value = 0.15;
+  g.connect(lim); lim.connect(ctx.destination);
+  return g;
+}
+function playBuffer(a){
+  stopVoice();
+  if (!ctx) return browserVoice(speech);
+  srcNode = ctx.createBufferSource(); srcNode.buffer = a.buf; srcNode.connect(leveled(a.buf));
+  const t0 = ctx.currentTime, dur = a.buf.duration;
+  setSpeaking(true);
+  srcNode.onended = () => { cancelAnimationFrame(raf); finish(); };
+  srcNode.start();
+  const tick = () => {
+    const tm = ctx.currentTime - t0;
+    if (a.timed) { let k = -1; for (let i = 0; i < words.length; i++) { if (words[i].t != null && words[i].t <= tm) k = i; } if (k >= 0) highlight(words[k].start); }
+    else highlight(Math.floor(speech.length * tm / dur));
+    onProgress(tm / dur);
+    raf = requestAnimationFrame(tick);
+  };
+  tick();
+}
+// Long answers are spoken in chunks so browsers don't cut off midway.
+function browserVoice(text){
+  if (!("speechSynthesis" in window)) { onProgress(1); return; }
+  stopVoice();
+  const chunks = []; const re = /[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g; let m, buf = "", bufStart = 0;
+  while ((m = re.exec(text))) {
+    if (!buf) bufStart = m.index;
+    buf += m[0];
+    if (buf.length > 180) { chunks.push({ text: buf, start: bufStart }); buf = ""; }
+  }
+  if (buf) chunks.push({ text: buf, start: bufStart });
+  const v = pickVoice(); let started = false;
+  chunks.forEach((c, idx) => {
+    const u = new SpeechSynthesisUtterance(c.text);
+    if (v) u.voice = v; u.rate = speedPref === "slow" ? 0.82 : 0.98; u.pitch = pitchFor(v, 1.0);
+    u.onstart = () => { if (!started) { started = true; setSpeaking(true); onProgress(0); startEstimate(text.length, u.rate); } else if (!lastBoundary || Date.now() - lastBoundary > 1500) { estStart = Date.now() - c.start / (14.5 * u.rate) * 1000; } };
+    u.onboundary = e => { lastBoundary = Date.now(); const ci = c.start + e.charIndex; highlight(ci); onProgress(ci / text.length); };
+    if (idx === chunks.length - 1) u.onend = finish;
+    speechSynthesis.speak(u);
+  });
+  setTimeout(() => { if (!speaking) onProgress(1); }, 2500);
+}
+// Short lines use the same ElevenLabs voice, so phones match desktop
+async function sayShort(text){
+  if (!text) return;
+  const id = ++shortId;
+  try { if (shortNode) shortNode.stop(); } catch(e) {}
+  try { speechSynthesis.cancel(); } catch(e) {}
+  if (!voiceOff && ctx) {
+    try {
+      const r = await fetch("/api/speak", { method:"POST", headers:{ "content-type":"application/json" }, body: JSON.stringify({ text, voice: voicePref, speed: speedPref }) });
+      if (r.status === 501) voiceOff = true;
+      else if (r.ok) {
+        const d = await r.json();
+        const bytes = Uint8Array.from(atob(d.audio), c => c.charCodeAt(0));
+        const buf = await ctx.decodeAudioData(bytes.buffer);
+        if (id !== shortId || speaking) return;
+        shortNode = ctx.createBufferSource(); shortNode.buffer = buf; shortNode.connect(leveled(buf)); shortNode.start();
+        return;
+      }
+    } catch(e) {}
+  }
+  if (id !== shortId) return;
+  browserShort(text);
+}
+function browserShort(text){
+  if (!("speechSynthesis" in window) || !text) return;
+  const u = new SpeechSynthesisUtterance(text); const v = pickVoice(); if (v) u.voice = v; u.rate = speedPref === "slow" ? 0.82 : 0.98; u.pitch = pitchFor(v, 1.0);
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+if ("speechSynthesis" in window) speechSynthesis.onvoiceschanged = () => {};
+
+/* ---------- welcome ---------- */
+function welcome(){
+  buildBoard([{ title: "", caption: "Pick a starter pair or enter your own two things.", svg:
+    "<text x='400' y='70' text-anchor='middle' font-family='JetBrains Mono, monospace' font-size='24' fill='#c5cde6'>WHAT'S THE</text>" +
+    "<text x='400' y='128' text-anchor='middle' font-family='Inter' font-weight='800' font-size='58' fill='#ffffff'>Difference?</text>" +
+    "<circle cx='325' cy='285' r='112' fill='#ff8a65' fill-opacity='0.14' stroke='#ff8a65' stroke-width='4'/>" +
+    "<circle cx='475' cy='285' r='112' fill='#4cc3ff' fill-opacity='0.14' stroke='#4cc3ff' stroke-width='4'/>" +
+    "<text x='268' y='294' text-anchor='middle' font-family='Inter' font-weight='700' font-size='26' fill='#ff8a65'>This</text>" +
+    "<text x='400' y='294' text-anchor='middle' font-family='Inter' font-weight='800' font-size='24' fill='#ffd23f'>VS</text>" +
+    "<text x='532' y='294' text-anchor='middle' font-family='Inter' font-weight='700' font-size='26' fill='#4cc3ff'>That</text>" +
+    "<text x='400' y='455' text-anchor='middle' font-family='JetBrains Mono, monospace' font-size='21' fill='#ffd23f'>side by side · shared · differences · which one when</text>" }]);
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { if (liveBoard || lesson || busy) return; manual = true; showFigure(0); });
+}
+
+/* ---------- start ---------- */
+try { const lv = localStorage.getItem("wtd_level"); depth = lv === "full" ? "full" : "quick"; } catch(e) { depth = "quick"; }
+setDepth(depth); setVoicePref(voicePref); renderStarters(); welcome();
+// A shared link (?q=...) opens that comparison right away; tap 🔊 Hear it to listen.
+const params = new URLSearchParams(location.search);
+const sq = params.get("q");
+if (sq) { if (params.get("d") === "quick") setDepth("quick"); fillBoxes(sq); $("q").value = sq; ask(sq, "", { silent: true }); }
+
+/* ---------- auto-size: tell the host page how tall this tool is ---------- */
+(function(){
+  let last = 0;
+  function send(){
+    const w = document.querySelector(".wrap"); if (!w) return;
+    const h = Math.ceil(w.getBoundingClientRect().bottom + window.scrollY + 12);
+    if (Math.abs(h - last) < 4) return;
+    last = h;
+    try { if (window.parent !== window) window.parent.postMessage({ type: "pp-frame-height", h: h }, "*"); } catch(e) {}
+  }
+  try { new ResizeObserver(send).observe(document.body); } catch(e) {}
+  window.addEventListener("load", send);
+  setInterval(send, 1500);
+  send();
+})();
+})();
+</script>
+</body>
+</html>
