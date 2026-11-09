@@ -3,8 +3,8 @@
 // Optional: ELEVENLABS_VOICE_ID (Man) and ELEVENLABS_VOICE_ID_WOMAN (Woman) to swap in different voices
 // Only the narrator's own words are sent here. No visitor audio ever reaches this server.
 
-const DEFAULT_MAN = "UPlXPHEQFgDFTFd0qJ9R";   // Charismatic Chris - warm, bright, expressive
-const DEFAULT_WOMAN = "W3Rk2MrllOWWYVX9H2B1"; // Instructional Marina - Warm & clear
+const DEFAULT_MAN = "MlIxnl4hUPbFzWffsZ76";   // Louis - Friendly Instructor
+const DEFAULT_WOMAN = "bmAn0TLASQN7ctGBMHgN"; // Bennett - Friendly, Smart Narrator
 const cache = new Map(); // repeat answers don't cost twice (resets when the server sleeps)
 
 module.exports = async (req, res) => {
@@ -46,7 +46,7 @@ module.exports = async (req, res) => {
         text,
         model_id: process.env.ELEVENLABS_MODEL || "eleven_flash_v2_5",
         voice_settings: who === "man"
-          ? { stability: 0.38, similarity_boost: 0.8, style: 0.4, use_speaker_boost: true, speed }   // livelier, more expressive delivery
+          ? { stability: 0.45, similarity_boost: 0.8, style: 0.3, use_speaker_boost: true, speed }
           : { stability: 0.5, similarity_boost: 0.8, style: 0.25, use_speaker_boost: true, speed }
       })
     });
