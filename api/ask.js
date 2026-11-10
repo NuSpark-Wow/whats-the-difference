@@ -6,7 +6,7 @@
 const MODEL = process.env.CLAUDE_MODEL || "claude-sonnet-5-5";
 const CHECK_MODEL = process.env.CLAUDE_CHECK_MODEL || "claude-haiku-5-5";
 // Diagrams use the fast model, which the drawing step is tuned for. The layout rules in SYSTEM_BOARD keep labels inside boxes and off lines.
-const BOARD_MODEL = process.env.BOARD_MODEL || "claude-haiku-5-5";
+const BOARD_MODEL = process.env.BOARD_MODEL || "claude-sonnet-5-5";   // the stronger model draws the diagrams (more accurate, cleaner labels)
 const HOURLY_LIMIT = 30;
 const hits = new Map();
 
@@ -101,7 +101,10 @@ Each svg is SVG ELEMENTS ONLY (no <svg> wrapper) on an 800 wide x 500 tall dark 
 - Colors only: #ffffff (white), #ff8a65 (coral, first item), #4cc3ff (blue, second item), #b8f04a (lime, third item), #ffd23f (gold, shared things and comparison points). Fills, if any, use fill-opacity='0.14'. Outlines use fill='none' unless filled that way.
 - Lines: stroke-width 2 to 4, stroke-linecap='round'. Dashed lines use stroke-dasharray='6 6'. Text: font-family='Inter', sizes as given above.
 - TEXT SIZE MATH: at font-size 18, each character is about 10px wide (20px font: 11px; 26px font: 15px). Count the characters of every label and obey the character limits above. Shorten words rather than let text run past its panel, circle zone or box. If an item name is longer than 16 characters, use a shorter form of it.
-- LINES NEVER CROSS TEXT. Text never sits on a shape's outline. Leave 20px between things; keep everything inside x 20-780, y 20-480. Max 34 elements per figure. Each figure stands alone (the board is cleared between figures).
+- LINES NEVER CROSS TEXT. Text never sits on a shape's outline. Leave 20px between things; keep everything inside x 20-780, y 20-480. Max 44 elements per figure. Each figure stands alone (the board is cleared between figures).
+- When a figure shows an object, draw it as accurately as you can (true proportions, parts in their real places). Every label that names a part has a leader line from a small dot (r 3) ON that part to 8px short of the label, and leader lines never cross each other.
+- Every symbol, color or shape that stands for something has its own label or appears in the legend; never leave a symbol unexplained. Two labels never touch or stack closer than 30px.
+- Before you finish each figure, check: does any text run past x 20 or x 780 or out of its box? Does any line cross any text? Is every label pointing at the right thing? Fix these first.
 
 Always respond by calling the give_board tool.`;
 
@@ -162,7 +165,7 @@ async function streamClaude(system, user, maxTokens, model, onText) {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model, max_tokens: maxTokens, system, stream: true, thinking: { type: "disabled" }, messages: [{ role: "user", content: user }] })
+    body: JSON.stringify({ model, max_tokens: maxTokens, system, stream: true, ...(/haiku/i.test(model) ? { thinking: { type: "disabled" } } : {}), messages: [{ role: "user", content: user }] })   // the stronger model refuses that setting
   });
   if (!r.ok) { const t = await r.text().catch(() => ""); throw new Error("api_" + r.status + " " + t.slice(0, 200)); }
   const reader = r.body.getReader(); const dec = new TextDecoder(); let buf = "";
@@ -220,7 +223,7 @@ async function streamBoard(res, isGet, user, maxSteps) {
   };
   for (let attempt = 0; attempt < 2 && !wrote && !none; attempt++) {
     text = "";
-    try { await streamClaude(SYSTEM_BOARD_STREAM, user, 8000, BOARD_MODEL, t => { text += t; flush(); }); flush(); lastErr = null; }
+    try { await streamClaude(SYSTEM_BOARD_STREAM, user, 16000, BOARD_MODEL, t => { text += t; flush(); }); flush(); lastErr = null; }
     catch (e) { lastErr = e; console.error("drawing attempt", attempt + 1, "failed:", e.message); }
     if (wrote || none) break;
   }
