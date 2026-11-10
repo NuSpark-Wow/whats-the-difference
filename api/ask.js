@@ -221,12 +221,35 @@ async function streamBoard(res, isGet, user, maxSteps) {
       start(); res.write(JSON.stringify(step) + "\n"); count++;
     }
   };
-  for (let attempt = 0; attempt < 2 && !wrote && !none; attempt++) {
-    text = "";
-    try { await streamClaude(SYSTEM_BOARD_STREAM, user, 16000, BOARD_MODEL, t => { text += t; flush(); }); flush(); lastErr = null; }
-    catch (e) { lastErr = e; console.error("drawing attempt", attempt + 1, "failed:", e.message); }
-    if (wrote || none) break;
-  }
+  // All the figures are drawn at the same time, one call each, and sent to the page in order as soon as
+  // each is ready. Side by side and the Venn diagram use the stronger model; the table and the decision
+  // fork are simpler and use the fast model, so they are ready quickly.
+  const VIEWS = ["Side by side", "What they share", "Key differences", "Which one when"];
+  const n = Math.min(maxSteps, 4);
+  const results = new Array(n).fill(undefined); let next = 0;
+  const emit = () => {
+    while (next < n && results[next] !== undefined) {
+      const step = results[next]; next++;
+      if (!step || !step.svg) continue;
+      start(); res.write(JSON.stringify(step) + "\n"); count++;
+    }
+  };
+  const drawOne = async k => {
+    const one = `${user}\n\nDraw ONLY figure ${k + 1} of ${n}: the ${VIEWS[k]} view. Write exactly one === STEP block for it and nothing else.`;
+    const model = k < 2 ? BOARD_MODEL : "claude-haiku-5-5";
+    for (let attempt = 0; attempt < 2; attempt++) {
+      let t = "";
+      try {
+        await streamClaude(SYSTEM_BOARD_STREAM, one, k < 2 ? 12000 : 6000, model, x => { t += x; });
+        if (t.includes("=== NONE")) { none = true; return null; }
+        const a = t.indexOf("=== STEP"), b = t.indexOf("=== END", a);
+        if (a >= 0 && b > a) { const step = parseBlock(t.slice(a + 8, b)); if (step.svg) return step; }
+        if (a >= 0) { const step = parseBlock(t.slice(a + 8)); if (step.svg) return step; }
+      } catch (e) { lastErr = e; console.error("figure", k + 1, "attempt", attempt + 1, "failed:", e.message); }
+    }
+    return null;
+  };
+  await Promise.all(Array.from({ length: n }, (_, k) => drawOne(k).then(step => { results[k] = step; if (!none) emit(); })));
   if (wrote) { res.write(JSON.stringify({ done: true }) + "\n"); return res.end(); }
   if (none || !lastErr) {
     res.setHeader("Cache-Control", isGet && none ? "public, s-maxage=2592000" : "no-store");
