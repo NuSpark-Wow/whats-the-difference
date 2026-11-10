@@ -419,6 +419,7 @@ let voicePref = "man";
 try { const v = localStorage.getItem("wtd_voice"); if (v === "woman" || v === "mute") voicePref = v; } catch(e) {}
 function setVoicePref(p){
   voicePref = p;
+  if (p === "man" || p === "woman") { lastVoice = p; try { localStorage.setItem("wtd_voice_last", p); } catch(e) {} }
   $("vMan").classList.toggle("on", p === "man"); $("vWoman").classList.toggle("on", p === "woman"); $("vMute").classList.toggle("on", p === "mute");
   try { localStorage.setItem("wtd_voice", p); } catch(e) {}
 }
@@ -439,7 +440,12 @@ setTimeout(() => setSpeed(speedPref), 0);
 $("vMan").onclick = () => { setVoicePref("man"); unlock(); sayShort("Welcome to What's the Difference."); };
 $("vWoman").onclick = () => { setVoicePref("woman"); unlock(); sayShort("Welcome to What's the Difference."); };
 // Mute: no voice at all; the words and pictures still appear in full.
-$("vMute").onclick = () => { const was = speaking; setVoicePref("mute"); try { if (typeof shortNode !== "undefined" && shortNode) shortNode.stop(); } catch(e) {} try { speechSynthesis.cancel(); } catch(e) {} if (was) { stopVoice(); finish(); } };
+var lastVoice = "man";
+try { if (localStorage.getItem("wtd_voice_last") === "woman") lastVoice = "woman"; } catch(e) {}
+$("vMute").onclick = () => {
+  // tap Mute again to bring back the last voice
+  if (voicePref === "mute") { setVoicePref(lastVoice); unlock(); sayShort("Voice on."); return; }
+  const was = speaking; setVoicePref("mute"); try { if (typeof shortNode !== "undefined" && shortNode) shortNode.stop(); } catch(e) {} try { speechSynthesis.cancel(); } catch(e) {} if (was) { stopVoice(); finish(); } };
 
 const MALE_RE = /\bmale\b|christopher|roger|eric|guy|davis|tom|daniel|ryan|thomas|brian|andrew|aaron|alex|david|mark|fred|arthur|oliver/i, FEMALE_RE = /female|michelle|jenny|samantha|allison|ava|aria|emma|sonia|libby|susan|serena|kate|zira|joanna|google us english|google uk english female/i;
 function pitchFor(v, base){
