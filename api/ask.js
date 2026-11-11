@@ -101,6 +101,9 @@ Each svg is SVG ELEMENTS ONLY (no <svg> wrapper) on an 800 wide x 500 tall dark 
 - Colors only: #ffffff (white), #ff8a65 (coral, first item), #4cc3ff (blue, second item), #b8f04a (lime, third item), #ffd23f (gold, shared things and comparison points). Fills, if any, use fill-opacity='0.14'. Outlines use fill='none' unless filled that way.
 - Lines: stroke-width 2 to 4, stroke-linecap='round'. Dashed lines use stroke-dasharray='6 6'. Text: font-family='Inter', sizes as given above.
 - TEXT SIZE MATH: at font-size 18, each character is about 10px wide (20px font: 11px; 26px font: 15px). Count the characters of every label and obey the character limits above. Shorten words rather than let text run past its panel, circle zone or box. If an item name is longer than 16 characters, use a shorter form of it.
+- TEXT IN A BOX OR PILL: center it. For a box at y=Y with height H, put the text at y = Y + H/2 + 0.35 x font-size with text-anchor='middle' at the box's center x, and make the box at least font-size + 24 tall.
+- ROWS: anything stacked vertically keeps at least 20px of empty space between rows. Never put a box or pill on top of other words. Do not crowd the bottom of the board.
+- LABELS NEVER SIT ON A LINE: keep words at least 12px away from ground lines and box borders.
 - LINES NEVER CROSS TEXT. Text never sits on a shape's outline. Leave 20px between things; keep everything inside x 20-780, y 20-480. Max 44 elements per figure. Each figure stands alone (the board is cleared between figures).
 - When a figure shows an object, draw it as accurately as you can (true proportions, parts in their real places). Every label that names a part has a leader line from a small dot (r 3) ON that part to 8px short of the label, and leader lines never cross each other.
 - Every symbol, color or shape that stands for something has its own label or appears in the legend; never leave a symbol unexplained. Two labels never touch or stack closer than 30px.
