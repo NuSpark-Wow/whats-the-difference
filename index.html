@@ -1404,6 +1404,20 @@ function browserShort(text){
 if ("speechSynthesis" in window) speechSynthesis.onvoiceschanged = () => {};
 
 /* ---------- welcome ---------- */
+// The intro waits until the board is actually on screen, so it isn't missed while someone reads the top of the page.
+var boardSeen = false, boardInView = true, introQueue = null;
+(function(){
+  const el = document.getElementById("svg");
+  if (!el || !("IntersectionObserver" in window)) { boardSeen = true; return; }
+  boardInView = false;
+  try {
+    new IntersectionObserver(es => { es.forEach(e => {
+      boardInView = e.isIntersecting && e.intersectionRatio >= 0.45;
+      if (boardInView) { boardSeen = true; if (introQueue) { const f = introQueue; introQueue = null; f(); } }
+    }); }, { threshold: [0, 0.45, 0.8] }).observe(el);
+  } catch(e) { boardSeen = true; boardInView = true; }
+})();
+function whenBoardSeen(fn){ if (boardSeen) fn(); else introQueue = fn; }
 function welcome(){
   buildBoard([{ title: "", caption: "Pick a starter pair or enter your own two things.", svg:
     "<text x='400' y='70' text-anchor='middle' font-family='JetBrains Mono, monospace' font-size='24' fill='#c5cde6'>WHAT'S THE</text>" +
@@ -1414,7 +1428,7 @@ function welcome(){
     "<text x='400' y='294' text-anchor='middle' font-family='Inter' font-weight='800' font-size='24' fill='#ffd23f'>VS</text>" +
     "<text x='532' y='294' text-anchor='middle' font-family='Inter' font-weight='700' font-size='26' fill='#4cc3ff'>That</text>" +
     "<text x='400' y='455' text-anchor='middle' font-family='JetBrains Mono, monospace' font-size='21' fill='#ffd23f'>side by side · shared · differences · which one when</text>" }]);
-  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { if (liveBoard || lesson || busy) return; manual = true; showFigure(0); });
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => whenBoardSeen(() => { if (liveBoard || lesson || busy) return; manual = true; showFigure(0); }));
 }
 
 /* ---------- start ---------- */
