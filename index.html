@@ -69,6 +69,11 @@ button{font-family:inherit;cursor:pointer}
 .qrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .qbtn{text-align:left;font-size:15px;background:var(--card2);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-height:48px}
 .qbtn:hover{border-color:var(--accent)}
+.qbtn.fresh{animation:qfresh 1.6s ease-out}
+@keyframes qfresh{0%{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,210,63,.35)}100%{box-shadow:none}}
+.morebtn{display:block;width:100%;margin-top:12px;padding:12px 14px;min-height:48px;border-radius:10px;border:1px dashed var(--accent);background:transparent;color:var(--accent);font-weight:700;font-size:15px}
+.morebtn:hover{background:rgba(255,210,63,.08)}
+.morebtn:disabled{opacity:.7;cursor:wait}
 .topics.small .tiles,.topics.small .th span{display:none}
 .topics.small .qs{margin-top:0}
 .topics .tog{border:1px solid var(--line);background:var(--card2);color:var(--soft);border-radius:8px;padding:6px 10px;font-weight:600;font-size:13px}
@@ -225,7 +230,7 @@ button{font-family:inherit;cursor:pointer}
 #pause.ready{animation:readyGlow 1.6s ease-in-out infinite;border-color:#a3e635;color:#2f7d0f}
 @keyframes readyGlow{0%,100%{box-shadow:0 0 0 0 rgba(163,230,53,0)}50%{box-shadow:0 0 0 6px rgba(163,230,53,.4)}}
 #views button.fresh{animation:readyGlow 1.2s ease-in-out 3}
-@media (prefers-reduced-motion:reduce){#pause.ready,#views button.fresh{animation:none;outline:2px solid #a3e635}}
+@media (prefers-reduced-motion:reduce){.qbtn.fresh{animation:none}#pause.ready,#views button.fresh{animation:none;outline:2px solid #a3e635}}
 #startOver{color:#fca5a5;font-weight:800}
 .rategrp{display:flex;align-items:center;gap:6px;padding:4px 12px!important}
 .rategrp input{width:130px;accent-color:#5eead4;height:28px}
@@ -438,9 +443,42 @@ function renderStarters(){
     const wrap = document.createElement("div"); wrap.className = "qs";
     const ql = document.createElement("div"); ql.className = "ql"; ql.textContent = "Starter pairs · " + TOPICS[topicSel][0]; wrap.appendChild(ql);
     const row = document.createElement("div"); row.className = "qrow";
-    qs.forEach(q => { const b = document.createElement("button"); b.className = "qbtn"; b.textContent = q.join(" vs "); b.onclick = () => { unlock(); setDepth(chosenLevel); fillBoxes(q); $("q").value = compose(); ask(); }; row.appendChild(b); });
-    wrap.appendChild(row); box.appendChild(wrap);
+    const extra = morePairs[topicSel] || [];
+    qs.concat(extra).forEach((q, k) => { const b = document.createElement("button"); b.className = "qbtn" + (k >= qs.length + extra.length - freshCount ? " fresh" : ""); b.textContent = q.join(" vs "); b.onclick = () => { unlock(); setDepth(chosenLevel); fillBoxes(q); $("q").value = compose(); ask(); }; row.appendChild(b); });
+    freshCount = 0;
+    wrap.appendChild(row);
+    // "4 more ideas": four new pairs for this topic each tap, up to 24 extra
+    if (extra.length < 24) {
+      const mb = document.createElement("button"); mb.className = "morebtn"; mb.id = "moreIdeas";
+      mb.textContent = ideasBusy ? "Finding 4 more ideas\u2026" : "+ 4 more ideas"; mb.disabled = ideasBusy;
+      mb.onclick = () => getMoreIdeas(topicSel);
+      wrap.appendChild(mb);
+    }
+    box.appendChild(wrap);
   }
+}
+
+/* ---------- 4 more ideas ---------- */
+const morePairs = {};
+let ideasBusy = false, freshCount = 0;
+async function getMoreIdeas(i){
+  if (ideasBusy) return;
+  ideasBusy = true; renderStarters();
+  const t = TOPICS[i], shown = t[1].concat(morePairs[i] || []).map(q => q.join(" vs "));
+  let d = null;
+  for (let attempt = 0; attempt < 2 && !d; attempt++) {
+    try {
+      const r = await fetch(`/api/ask?part=ideas&v=1&t=${encodeURIComponent(t[0].replace(/&amp;/g, "&"))}&x=${encodeURIComponent(shown.join("|"))}`);
+      if (r.ok) { const j = await r.json(); if (j && Array.isArray(j.pairs)) d = j; }
+    } catch(e) {}
+  }
+  ideasBusy = false;
+  if (d && d.pairs.length) {
+    morePairs[i] = (morePairs[i] || []).concat(d.pairs);
+    if (topicSel === i) freshCount = d.pairs.length;
+    track("more_ideas", { topic: t[0] });
+  } else toast(d && d.limit ? "That's a lot of ideas for now. Try again in a bit." : "Couldn't get more ideas just now. Tap again in a moment.");
+  renderStarters();
 }
 
 /* ---------- Quick vs Full ---------- */
