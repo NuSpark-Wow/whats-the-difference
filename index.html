@@ -70,6 +70,8 @@ button{font-family:inherit;cursor:pointer}
 .qbtn{text-align:left;font-size:15px;background:var(--card2);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-height:48px}
 .qbtn:hover{border-color:var(--accent)}
 .qbtn.fresh{animation:qfresh 1.6s ease-out}
+.qbtn.picked{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+.qbtn.picked::before{content:"\2713  "}
 @keyframes qfresh{0%{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,210,63,.35)}100%{box-shadow:none}}
 .morebtn{display:block;width:100%;margin-top:12px;padding:12px 14px;min-height:48px;border-radius:10px;border:1px dashed var(--accent);background:transparent;color:var(--accent);font-weight:700;font-size:15px}
 .morebtn:hover{background:rgba(255,210,63,.08)}
@@ -444,7 +446,7 @@ function renderStarters(){
     const ql = document.createElement("div"); ql.className = "ql"; ql.textContent = "Starter pairs · " + TOPICS[topicSel][0]; wrap.appendChild(ql);
     const row = document.createElement("div"); row.className = "qrow";
     const extra = morePairs[topicSel] || [];
-    qs.concat(extra).forEach((q, k) => { const b = document.createElement("button"); b.className = "qbtn" + (k >= qs.length + extra.length - freshCount ? " fresh" : ""); b.textContent = q.join(" vs "); b.onclick = () => { unlock(); setDepth(chosenLevel); fillBoxes(q); $("q").value = compose(); ask(); }; row.appendChild(b); });
+    qs.concat(extra).forEach((q, k) => { const b = document.createElement("button"); b.className = "qbtn" + (k >= qs.length + extra.length - freshCount ? " fresh" : "") + (q.join(" vs ") === pickedPair ? " picked" : ""); b.textContent = q.join(" vs "); b.setAttribute("aria-pressed", q.join(" vs ") === pickedPair ? "true" : "false"); b.onclick = () => { pickedPair = q.join(" vs "); document.querySelectorAll(".qbtn.picked").forEach(x => { x.classList.remove("picked"); x.setAttribute("aria-pressed", "false"); }); b.classList.add("picked"); b.setAttribute("aria-pressed", "true"); unlock(); setDepth(chosenLevel); fillBoxes(q); $("q").value = compose(); ask(); }; row.appendChild(b); });
     freshCount = 0;
     wrap.appendChild(row);
     // "4 more ideas": four new pairs for this topic each tap, up to 24 extra
@@ -460,7 +462,7 @@ function renderStarters(){
 
 /* ---------- 4 more ideas ---------- */
 const morePairs = {};
-let ideasBusy = false, freshCount = 0;
+let ideasBusy = false, freshCount = 0, pickedPair = "";
 async function getMoreIdeas(i){
   if (ideasBusy) return;
   ideasBusy = true; renderStarters();
