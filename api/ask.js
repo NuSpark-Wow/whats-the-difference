@@ -360,7 +360,7 @@ const ideaHits = new Map();
 const IDEAS_TOOL = {
   name: "give_pairs", description: "Deliver four new comparison pairs.",
   input_schema: { type: "object", properties: {
-    pairs: { type: "array", items: { type: "array", items: { type: "string" } } }
+    pairs: { type: "array", description: "Exactly 4 pairs. Each pair is an array of 2 (or 3) short item names, e.g. [\"fog\", \"mist\"].", items: { type: "array", items: { type: "string" } } }
   }, required: ["pairs"] }
 };
 const SYSTEM_IDEAS = `You suggest starter pairs for "What's the Difference?", a learning tool for curious adults that explains the difference between things people often mix up.
@@ -385,11 +385,17 @@ async function moreIdeas(req, src, send) {
   const user = `Topic: ${topic}\nPairs already shown (do not repeat):\n${shown.map(x => "- " + x).join("\n") || "(none)"}`;
   try {
     const j = await withRetry(() => callTool(SYSTEM_IDEAS, IDEAS_TOOL, user, 800, x => Array.isArray(x.pairs), CHECK_MODEL), 12000);
+    // the AI may send ["fog","mist"], "fog vs mist" or {"items":[...]} — accept all three
+    const toItems = p => Array.isArray(p) ? p
+      : (p && Array.isArray(p.items)) ? p.items
+      : typeof p === "string" ? p.split(/\s+(?:vs\.?|versus)\s+/i)
+      : [];
     const pairs = j.pairs
-      .map(p => (Array.isArray(p) ? p : []).map(i => clip(i, 40).replace(/[.,;:!?]+$/, "")).filter(Boolean).slice(0, 3))
+      .map(p => toItems(p).map(i => clip(i, 40).replace(/[.,;:!?]+$/, "")).filter(Boolean).slice(0, 3))
       .filter(p => p.length >= 2 && !seen.has(p.join(" vs ").toLowerCase()))
       .slice(0, 4);
-    return send(200, { pairs }, true);
+    if (!pairs.length) console.error("ideas came back empty for", topic, JSON.stringify(j).slice(0, 300));
+    return send(200, { pairs }, pairs.length > 0);   // never save an empty answer
   } catch (e) {
     return send(500, { error: "oops", reason: errorCode(e) });
   }
