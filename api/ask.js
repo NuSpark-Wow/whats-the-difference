@@ -353,6 +353,48 @@ async function explainFigure(src, send) {
   }
 }
 
+// "4 more ideas": four fresh starter pairs for one topic, never repeating the ones already on screen.
+// Cheap and fast (the small model), saved on Vercel's network, with its own per-visitor limit.
+const IDEAS_LIMIT = 40;
+const ideaHits = new Map();
+const IDEAS_TOOL = {
+  name: "give_pairs", description: "Deliver four new comparison pairs.",
+  input_schema: { type: "object", properties: {
+    pairs: { type: "array", items: { type: "array", items: { type: "string" } } }
+  }, required: ["pairs"] }
+};
+const SYSTEM_IDEAS = `You suggest starter pairs for "What's the Difference?", a learning tool for curious adults that explains the difference between things people often mix up.
+Given a topic and the pairs already shown, return exactly 4 NEW pairs for that topic.
+- Each pair is an array of 2 items (use 3 items only when the three are commonly confused together, at most one three-way pair per set).
+- Pick things everyday people genuinely confuse or wonder about. Real, well-known things only; no made-up or obscure terms.
+- Each item is short: 1-4 words, lowercase unless it is a proper name, no "vs", no punctuation at the end.
+- Never repeat or reword a pair already shown, and do not reuse the same item twice in your four.
+- Mix it up: vary the angle across the four (not all from one sub-area).
+- Family-friendly and neutral. Nothing sexual, hateful, or that ranks groups of people.`;
+async function moreIdeas(req, src, send) {
+  const clip = (v, n) => String(v || "").replace(/[<>{}]/g, " ").replace(/\s+/g, " ").trim().slice(0, n);
+  const topic = clip(src.t, 40).replace(/&amp;/g, "&");
+  if (!topic) return send(400, { error: "empty" });
+  const shown = clip(src.x, 2400).split("|").map(x => x.trim()).filter(Boolean).slice(0, 60);
+  const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "anon";
+  const now = Date.now();
+  const recent = (ideaHits.get(ip) || []).filter(t => now - t < 3600000);
+  if (recent.length >= IDEAS_LIMIT) return send(200, { pairs: [], limit: true }, false);
+  recent.push(now); ideaHits.set(ip, recent);
+  const seen = new Set(shown.map(x => x.toLowerCase()));
+  const user = `Topic: ${topic}\nPairs already shown (do not repeat):\n${shown.map(x => "- " + x).join("\n") || "(none)"}`;
+  try {
+    const j = await withRetry(() => callTool(SYSTEM_IDEAS, IDEAS_TOOL, user, 800, x => Array.isArray(x.pairs), CHECK_MODEL), 12000);
+    const pairs = j.pairs
+      .map(p => (Array.isArray(p) ? p : []).map(i => clip(i, 40).replace(/[.,;:!?]+$/, "")).filter(Boolean).slice(0, 3))
+      .filter(p => p.length >= 2 && !seen.has(p.join(" vs ").toLowerCase()))
+      .slice(0, 4);
+    return send(200, { pairs }, true);
+  } catch (e) {
+    return send(500, { error: "oops", reason: errorCode(e) });
+  }
+}
+
 module.exports = async (req, res) => {
   if (!allowedRequest(req)) return blockRequest(res);
   const isGet = req.method === "GET";
@@ -365,6 +407,7 @@ module.exports = async (req, res) => {
 
   const src = (isGet ? req.query : req.body) || {};
   if (src.part === "explain") return explainFigure(src, send);
+  if (src.part === "ideas") return moreIdeas(req, src, send);
   const part = src.part === "board" ? "board" : "lecture";
   const question = String(src.q || src.question || "").trim().slice(0, 300);
   const depth = ["quick", "simple"].includes(src.depth) ? src.depth : "full";
