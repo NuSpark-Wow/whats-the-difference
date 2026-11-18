@@ -360,12 +360,12 @@ const ideaHits = new Map();
 const IDEAS_TOOL = {
   name: "give_pairs", description: "Deliver four new comparison pairs.",
   input_schema: { type: "object", properties: {
-    pairs: { type: "array", description: "Exactly 4 pairs. Each pair is an array of 2 (or 3) short item names, e.g. [\"fog\", \"mist\"].", items: { type: "array", items: { type: "string" } } }
+    pairs: { type: "array", description: "Exactly 4 pairs, each written as one string like \"fog vs mist\" (or \"a vs b vs c\" for a three-way).", items: { type: "string" } }
   }, required: ["pairs"] }
 };
 const SYSTEM_IDEAS = `You suggest starter pairs for "What's the Difference?", a learning tool for curious adults that explains the difference between things people often mix up.
 Given a topic and the pairs already shown, return exactly 4 NEW pairs for that topic.
-- Each pair is an array of 2 items (use 3 items only when the three are commonly confused together, at most one three-way pair per set).
+- Write each pair as one string: "fog vs mist". Use 3 items ("a vs b vs c") only when the three are commonly confused together, at most one three-way pair per set.
 - Pick things everyday people genuinely confuse or wonder about. Real, well-known things only; no made-up or obscure terms.
 - Each item is short: 1-4 words, lowercase unless it is a proper name, no "vs", no punctuation at the end.
 - Never repeat or reword a pair already shown, and do not reuse the same item twice in your four.
@@ -383,19 +383,31 @@ async function moreIdeas(req, src, send) {
   recent.push(now); ideaHits.set(ip, recent);
   const seen = new Set(shown.map(x => x.toLowerCase()));
   const user = `Topic: ${topic}\nPairs already shown (do not repeat):\n${shown.map(x => "- " + x).join("\n") || "(none)"}`;
+  // up to two tries: if the first answer has nothing usable, ask once more
+  let pairs = [], raw = "";
   try {
-    const j = await withRetry(() => callTool(SYSTEM_IDEAS, IDEAS_TOOL, user, 800, x => Array.isArray(x.pairs), CHECK_MODEL), 12000);
-    // the AI may send ["fog","mist"], "fog vs mist" or {"items":[...]} — accept all three
-    const toItems = p => Array.isArray(p) ? p
-      : (p && Array.isArray(p.items)) ? p.items
-      : typeof p === "string" ? p.split(/\s+(?:vs\.?|versus)\s+/i)
-      : [];
-    const pairs = j.pairs
-      .map(p => toItems(p).map(i => clip(i, 40).replace(/[.,;:!?]+$/, "")).filter(Boolean).slice(0, 3))
-      .filter(p => p.length >= 2 && !seen.has(p.join(" vs ").toLowerCase()))
-      .slice(0, 4);
-    if (!pairs.length) console.error("ideas came back empty for", topic, JSON.stringify(j).slice(0, 300));
-    return send(200, { pairs }, pairs.length > 0);   // never save an empty answer
+    for (let attempt = 0; attempt < 2 && !pairs.length; attempt++) {
+      const j = await withRetry(() => callTool(SYSTEM_IDEAS, IDEAS_TOOL, user + (attempt ? "\n\nReturn exactly 4 NEW pairs as strings like \"fog vs mist\"." : ""), 1500, x => Array.isArray(x.pairs) || typeof x.pairs === "string", CHECK_MODEL), 12000);
+      raw = JSON.stringify(j).slice(0, 300);
+      // The AI may send each pair as ["fog","mist"], "fog vs mist", '["fog","mist"]' or {"items":[...]},
+      // and sometimes the whole list as one string. Accept all of them.
+      const parseMaybe = v => { if (typeof v === "string" && /^\s*[\[{]/.test(v)) { try { return JSON.parse(v); } catch (e) {} } return v; };
+      const toItems = p => {
+        p = parseMaybe(p);
+        if (Array.isArray(p)) return p.length === 1 && typeof p[0] === "string" ? toItems(p[0]) : p.map(String);
+        if (p && typeof p === "object") return toItems(p.items || p.pair || Object.values(p));
+        if (typeof p === "string") return p.split(/\s+(?:vs\.?|versus)\s+|\s*\/\s*/i);
+        return [];
+      };
+      let list = parseMaybe(j.pairs);
+      if (!Array.isArray(list)) list = [];
+      pairs = list
+        .map(p => toItems(p).map(i => clip(i, 40).replace(/^["']|["']$/g, "").replace(/[.,;:!?]+$/, "")).filter(Boolean).slice(0, 3))
+        .filter(p => p.length >= 2 && !seen.has(p.join(" vs ").toLowerCase()))
+        .slice(0, 4);
+    }
+    if (!pairs.length) console.error("ideas came back empty for", topic, raw);
+    return send(200, pairs.length ? { pairs } : { pairs, why: raw }, pairs.length > 0);   // never save an empty answer
   } catch (e) {
     return send(500, { error: "oops", reason: errorCode(e) });
   }
