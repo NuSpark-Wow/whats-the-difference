@@ -8,6 +8,7 @@ const DEFAULT_WOMAN = "bmAn0TLASQN7ctGBMHgN"; // Bennett - Friendly, Smart Narra
 const cache = new Map(); // repeat answers don't cost twice (resets when the server sleeps)
 
 module.exports = async (req, res) => {
+  if (!(await require("./_lwgate")(req, res, "whats-the-difference"))) return;
   if (!allowedRequest(req)) return blockRequest(res);
   const key = process.env.ELEVENLABS_API_KEY;
   // Health check you can open in a browser: /api/speak  (never shows the key)
