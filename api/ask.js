@@ -68,6 +68,7 @@ OTHER FIELDS (comparisons only):
 - "terms": 3-5 key words from the comparison, each with a one-sentence plain-English definition.
 - "memory": "How to remember it": one memory trick (a mnemonic, a rhyme, a mental picture or a word clue) that makes the difference stick. 1-2 sentences.
 - "misconception": the most common mix-up between these items and the truth (1-2 sentences), or "".
+- "surprise": "Surprising Similarity": one true, little-known thing the items have in common that most people would not guess (1-2 sentences, a real well-established fact), or "" if there is none.
 - "deeper": exactly 3 related pairs worth comparing next, each written as "A vs B" (short names, no question mark).
 
 For redirect, decline: fill only type, title, answer.
@@ -134,7 +135,7 @@ const LECTURE_TOOL = {
     answer: { type: "array", items: { type: "object", properties: { heading: { type: "string" }, text: { type: "string" } } } },
     rows: { type: "array", items: { type: "object", properties: { point: { type: "string" }, values: { type: "array", items: { type: "string" } } } } },
     terms: { type: "array", items: { type: "object", properties: { word: { type: "string" }, meaning: { type: "string" } } } },
-    memory: { type: "string" }, misconception: { type: "string" },
+    memory: { type: "string" }, misconception: { type: "string" }, surprise: { type: "string" },
     deeper: { type: "array", items: { type: "string" } }
   }, required: ["type", "title", "answer"] }
 };
@@ -291,6 +292,7 @@ function normalize(j) {
     values: (Array.isArray(r && r.values) ? r.values : []).map(v => String(v || "").trim().slice(0, 140)).slice(0, n)
   })).filter(r => r.point && r.values.length === n && r.values.every(Boolean)).slice(0, 8);
   j.memory = String(j.memory || "").trim().slice(0, 500);
+  j.surprise = String(j.surprise || "").trim().slice(0, 500);
   j.deeper = (Array.isArray(j.deeper) ? j.deeper : []).map(x => String(x || "").trim().slice(0, 90)).filter(Boolean).slice(0, 3);
   return j;
 }
