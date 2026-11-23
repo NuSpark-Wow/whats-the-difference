@@ -202,6 +202,7 @@ button{font-family:inherit;cursor:pointer}
 .fxcard div{margin-bottom:12px}
 .fact{border-left:4px solid var(--gold)}
 .myth{border-left:4px solid var(--a)}
+.surp{border-left:4px solid #b8f04a}
 /* side-by-side table */
 .matchup{margin-top:16px;overflow-x:auto}
 .mt{width:100%;border-collapse:separate;border-spacing:0;font-size:clamp(14.5px,1.5vw,17px);line-height:1.45}
@@ -423,6 +424,7 @@ button{font-family:inherit;cursor:pointer}
       <div class="card terms fxcard hide" id="fxCard"><h3>Formulas Explained</h3><div id="fxList"></div></div>
       <div class="card fact hide" id="factCard"><h3>How to Remember It</h3><p id="fact"></p></div>
       <div class="card myth hide" id="mythCard"><h3>Common Mix-Up</h3><p id="myth"></p></div>
+      <div class="card surp hide" id="surpCard"><h3>Surprising Similarity</h3><p id="surp"></p></div>
     </div>
   </div>
 
@@ -967,13 +969,14 @@ function render(opts){
 
   if (!isLec) { boardOff = true; clearTimeout(pumpTimer); figs = []; buildBoard([{ title: "", caption: L.type === "help" ? "You matter." : "Try another pair.", svg: blankCard() }]); showFigure(0); }
 
-  ["side","termsCard","factCard","mythCard","deepCard"].forEach(id => $(id).classList.add("hide"));
+  ["side","termsCard","factCard","mythCard","surpCard","deepCard"].forEach(id => $(id).classList.add("hide"));
   if (isLec) {
     const tb = $("terms"); tb.innerHTML = "";
     (L.terms || []).forEach(x => { if (!x || !x.word) return; const d = document.createElement("div"); d.innerHTML = "<b></b>: <span></span>"; d.querySelector("b").textContent = x.word; d.querySelector("span").textContent = x.meaning || ""; tb.appendChild(d); });
     if (tb.children.length) { $("termsCard").classList.remove("hide"); $("side").classList.remove("hide"); }
     if (L.memory) { $("fact").textContent = L.memory; $("factCard").classList.remove("hide"); $("side").classList.remove("hide"); }
     if (L.misconception) { $("myth").textContent = L.misconception; $("mythCard").classList.remove("hide"); $("side").classList.remove("hide"); }
+    if (L.surprise) { $("surp").textContent = L.surprise; $("surpCard").classList.remove("hide"); $("side").classList.remove("hide"); }
 
     const row = $("deeper"); row.innerHTML = "";
     (L.deeper || []).slice(0, 3).forEach(q => { const b = document.createElement("button"); b.className = "chip"; b.textContent = q; b.onclick = () => { if (busy) return; unlock(); b.textContent = "⏳ " + q; $("fStatus").textContent = WORKING; const p = parsePair(q); if (p.length >= 2) { setDepth(chosenLevel); fillBoxes(p); $("q").value = compose(); ask(compose(), "", { scroll: true }); } else ask(q, L.title, { scroll: true }); }; row.appendChild(b); });
